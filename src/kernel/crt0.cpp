@@ -1,4 +1,5 @@
 #include "linker.h"
+#include "kernel.h"
 #include <stdint.h>
 #include <cstdlib>
 #include "stm32f4xx.h"
@@ -7,14 +8,12 @@ static void setup_clock();
 static void copy(uint32_t *start, uint32_t *end, const uint32_t *load);
 static void fill(uint32_t *start, const uint32_t *end, uint32_t val);
 
-extern void kernel_startup() __attribute__((naked, noreturn));
-
 extern "C" void handler_reset() __attribute__((naked, noreturn));
 extern "C" void handler_reset() {
 	setup_clock();
 	copy(&__data_start, &__data_end, &__data_load);
 	fill(&__bss_start, &__bss_end, 0);
-	kernel_startup();
+	kernel_start();
 }
 
 #define RCC_CFGR_RTCPRE_POS 16
