@@ -1,7 +1,7 @@
 OUTPUT_FORMAT("elf32-littlearm")
 ENTRY(handler_reset)
 OUTPUT_ARCH(arm)
-GROUP(-lgcc -lm)
+GROUP(-lgcc -lm -lc)
 
 MEMORY {
 	flash (rx)      : org = 0x08000000, len = 1024k
@@ -35,7 +35,7 @@ SECTIONS {
 		__bss_end = .;
 	} >sram
 
-	.stack : {
+	.stack (NOLOAD) : {
         __stack_start = .;
 		__main_stack_start = .;
 		. += MAIN_STACK_SIZE;
