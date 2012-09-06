@@ -4,7 +4,6 @@
 #include "stm32f4xx.h"
 
 static void setup_clock();
-static void setup_fpu();
 static void copy(uint32_t *start, uint32_t *end, const uint32_t *load);
 static void fill(uint32_t *start, const uint32_t *end, uint32_t val);
 
@@ -13,7 +12,6 @@ extern void kernel_startup() __attribute__((naked, noreturn));
 extern "C" void handler_reset() __attribute__((naked, noreturn));
 extern "C" void handler_reset() {
 	setup_clock();
-	setup_fpu();
 	copy(&__data_start, &__data_end, &__data_load);
 	fill(&__bss_start, &__bss_end, 0);
 	kernel_startup();
@@ -45,14 +43,6 @@ static void setup_clock() {
 	RCC->CFGR |= RCC_CFGR_SW_PLL; // set PLL as system clock source
 }
 
-#define SCB_CPACR_CP11CP10_POS 20
-
-static void setup_fpu() {
-	SCB->CPACR |= 0xF << SCB_CPACR_CP11CP10_POS;
-	__DSB();
-	FPU->FPCCR = FPU_FPCCR_ASPEN_Msk | FPU_FPCCR_LSPEN_Msk;
-}
-
 static void copy(uint32_t *start, uint32_t *end, const uint32_t *load) {
 	while (start != end)
 		*start++ = *load++;
@@ -68,6 +58,7 @@ extern "C" void handler_fault() {
 	while (true) { }
 }
 
+extern "C" void handler_svcall() __attribute__((weak, alias("handler_fault")));
 extern "C" void handler_pendsv() __attribute__((weak, alias("handler_fault")));
 extern "C" void handler_systick() __attribute__((weak, alias("handler_fault")));
 
@@ -159,7 +150,7 @@ DECLARE_IRQ(fpu);
 extern "C" {
 	struct ISRVector {
 		void *sp;
-		void (*exceptions[16])();
+		void (*exceptions[15])();
 		void (*interrupts[82])();
 	};
 
@@ -172,13 +163,12 @@ extern "C" {
 			&handler_fault,
 			&handler_fault,
 			&handler_fault,
-			&handler_fault,
 			nullptr,
 			nullptr,
 			nullptr,
 			nullptr,
-			&handler_fault,
-			&handler_fault,
+			&handler_svcall,
+			nullptr,
 			nullptr,
 			&handler_pendsv,
 			&handler_systick,
