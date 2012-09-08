@@ -58,13 +58,13 @@ void sched_remove_task(Task &task) {
 
 void sched_add_task_tick(Task &task, Tick tick) {
 	task.waketick = tick;
-	task.insert_list_waketick_sorted(ticklist);
 	task.state = Task::State::SLEEP;
+	task.insert_list_waketick_sorted(ticklist);
 }
 
 void sched_cancel_task_tick(Task &task) {
-	task.remove_list();
 	task.state = Task::State::NONE;
+	task.remove_list();
 }
 
 void sched_add_task_initial(Task &task) {
@@ -74,14 +74,13 @@ void sched_add_task_initial(Task &task) {
 __attribute__((noreturn))
 void sched_start() {
 	curtask = schedlist_head();
-	__asm volatile("svc 0");
+	asm volatile("svc 0");
 	__builtin_unreachable();
 }
 
 extern "C" void handler_svcall() __attribute__((naked));
 extern "C" void handler_svcall() {
-	asm(
-	    "ldr sp, =__main_stack_end;" // reset stack pointer, it'll be used for IRQs from now on
+	asm("ldr sp, =__main_stack_end;" // reset stack pointer, it'll be used for IRQs from now on
 	    "ldr r0, =%[curtask];" // get address of current task pointer
 	    "ldr r0, [r0];" // get current task
 	    "ldr r1, [r0, %[sp]];" // get current task stack pointer
@@ -107,7 +106,7 @@ extern "C" void handler_pendsv() {
 		"ldr r1, =%[curtask];" // get the address of the current task pointer
 		"ldr r1, [r1];" // read it to get the current task control
 	    "cmp r1, r0;" // compare the previous and current task pointer
-	    "beq end;" // if they're the same, no context switch, go to the end
+	    "beq .end;" // if they're the same, no context switch, go to the end
 
 	    "mrs r2, psp;" // get program stack pointer
 	    "stmdb r2!, {r4-r11};" // store high registers to program stack pointer
@@ -117,7 +116,7 @@ extern "C" void handler_pendsv() {
 	    "ldmia r2!, {r4-r11};" // restore the high registers
 	    "msr psp, r2;" // set program stack pointer
 
-	    "end:"
+	    ".end:"
 	    "bx lr;" // end ISR (microcode pops lower regs)
 	    ::
 	     [sp] "i" (offsetof(Task, sp)),
