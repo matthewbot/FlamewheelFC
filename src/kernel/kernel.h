@@ -1,7 +1,7 @@
 #ifndef KERNEL_KERNEL_H
 #define KERNEL_KERNEL_H
 
-#include "sched.h"
+#include <stdint.h>
 
 static const uint8_t KERNEL_IRQ_PRIORITY = 0xA0;
 

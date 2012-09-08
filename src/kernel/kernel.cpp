@@ -40,12 +40,8 @@ extern "C" void handler_systick() {
 }
 
 static void idle_func(void *unused) {
-	while (true) {
+	while (true)
 		__WFI();
-		GPIOD->BSRRL = (1<<14);
-		__WFI();
-		GPIOD->BSRRH = (1<<14);
-	}
 }
 
 extern int main();
