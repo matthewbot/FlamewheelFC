@@ -3,9 +3,11 @@
 #include "sched.h"
 #include "kernel.h"
 
-static void delay() {
-	for (int i=0; i<0x00FFFFFF; i++) {
-		asm("nop");
+static void delay(int amt) {
+	while (amt--) {
+		for (int i=0; i<0x000FFFFF; i++) {
+			asm("nop");
+		}
 	}
 }
 
@@ -27,17 +29,17 @@ int main() {
 	const uint32_t pinmask = (1 << 13) | (1 << 15);
 	while (true) {
 		GPIOD->BSRRL = pinmask; // turn on pins
-		sched_sleep(1000);
+		delay(100);
 		GPIOD->BSRRH = pinmask; // turn off pins
-		sched_sleep(500);
+		sched_sleep(5000);
 	}
 }
 
 static void test_func(void *) {
 	while (true) {
 		GPIOD->BSRRL = (1 << 12);
-		sched_sleep(150);
+		delay(5);
 		GPIOD->BSRRH = (1 << 12);
-		sched_sleep(150);
+		delay(5);
 	}
 }

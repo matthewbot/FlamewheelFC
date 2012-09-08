@@ -147,4 +147,6 @@ void sched_tick() {
 		sched_add_task(*pos);
 		pos = pos_next;
 	}
+
+	sched_yield();
 }
