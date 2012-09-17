@@ -12,6 +12,7 @@ static void main_func(void *unused) __attribute__((noreturn));
 
 void kernel_start() {
 	SCB->SHP[7] = SCB->SHP[10] = SCB->SHP[11] = KERNEL_IRQ_PRIORITY;
+	SCB->SHCSR = SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk;
 
 	SysTick->LOAD = 168000 - 1;
 	SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk;
