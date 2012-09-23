@@ -8,24 +8,30 @@ static const uint32_t brr = bauddiv*16 + 0.5f;
 #define RCC_AHB1ENR_CCMDATARAMEN (1 << 20)
 
 void debug_init() {
-	RCC->AHB1ENR = RCC_AHB1ENR_CCMDATARAMEN | RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOBEN;
+	RCC->AHB1ENR = RCC_AHB1ENR_CCMDATARAMEN | RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN;
 	RCC->APB2ENR = RCC_APB2ENR_USART1EN ;
 	__DMB();
 
-	GPIOB->AFR[0] = 0x77000000;
-	GPIOB->MODER = 0x0000A000; // configure PB6-PB7 as AF7
-	GPIOD->MODER = 0x55000000; // configure PD12-PD15 as outputs
+	GPIOA->AFR[1] = 0xA8000770;
+	GPIOA->AFR[0] = 0x00000000;
+	GPIOA->ODR = 0x0000;
+	GPIOA->MODER = 0x00820000;
+	GPIOB->AFR[1] = 0x00000000;
+	GPIOB->AFR[0] = 0x00000000;
+	GPIOB->ODR = 0x0032;
+	GPIOB->MODER = 0x00000524;
 
 	USART1->BRR = brr;
 	USART1->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }
 
 void debug_setLED(int led, bool on) {
-	const uint32_t mask = (1 << (led+12));
+	static const uint8_t pins[] = {1, 4, 5};
+	const uint32_t mask = 1 << pins[led];
 	if (on)
-		GPIOD->BSRRL = mask;
+		GPIOB->BSRRH = mask;
 	else
-		GPIOD->BSRRH = mask;
+		GPIOB->BSRRL = mask;
 }
 
 void debug_putch(char ch) {

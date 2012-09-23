@@ -23,8 +23,6 @@ extern "C" void handler_reset() {
 #define RCC_PLLCFGR_PLLM_POS 0
 
 static void setup_clock() {
-	RCC->CR |= RCC_CR_HSEON; // power up the external clock
-	while (!(RCC->CR & RCC_CR_HSERDY)) { }
 	FLASH->ACR =
 		FLASH_ACR_LATENCY_5WS |  // Need 5 wait states at 168 Mhz
 		FLASH_ACR_DCEN | // enable data cache
@@ -33,10 +31,9 @@ static void setup_clock() {
 	RCC->CFGR = (8 << RCC_CFGR_RTCPRE_POS) | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_PPRE1_DIV4; // Setup APB2 to 84 Mhz and APB1 to 48 Mhz
 	RCC->PLLCFGR =
 		(7 << RCC_PLLCFGR_PLLQ_POS) | // 336 / 7 = 48 Mhz for USB/RNG
-		RCC_PLLCFGR_PLLSRC_HSE | // use HSE
 		(0 << RCC_PLLCFGR_PLLP_POS) | // 336 / (0+2) = 168 Mhz for system clock
 		(168 << RCC_PLLCFGR_PLLN_POS) | // 2 * 168 = 336 Mhz for VCO
-		(4 << RCC_PLLCFGR_PLLM_POS); // 8 / 4 = 2 Mhz for VCO input
+		(8 << RCC_PLLCFGR_PLLM_POS); // 16 / 8 = 2 Mhz for VCO input
 	RCC->CR |= RCC_CR_PLLON; // enable PLL
 	while (!(RCC->CR & RCC_CR_PLLRDY)) { } // wait for it to come up
 	RCC->CFGR |= RCC_CFGR_SW_PLL; // set PLL as system clock source
