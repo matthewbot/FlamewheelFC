@@ -3,9 +3,13 @@
 #include "kernel/sched.h"
 #include "kernel/kernel.h"
 #include "kernel/debug.h"
+#include "drivers/rgbled.h"
 
 int main() {
 	debug_init();
+	rgbled_init();
+
+	rgbled_set(0xFFA000, 250);
 
 	while (true) {
 		debug_puts("Hello World!\r\n");
