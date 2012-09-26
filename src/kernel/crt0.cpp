@@ -54,9 +54,12 @@ extern "C" void handler_fault() {
 	while (true) { }
 }
 
-extern "C" void handler_svcall() __attribute__((weak, alias("handler_fault")));
-extern "C" void handler_pendsv() __attribute__((weak, alias("handler_fault")));
-extern "C" void handler_systick() __attribute__((weak, alias("handler_fault")));
+#define DECLARE_HANDLER(name) extern "C" void handler_ ## name() __attribute((weak, alias("handler_fault")))
+DECLARE_HANDLER(svcall);
+DECLARE_HANDLER(pendsv);
+DECLARE_HANDLER(systick);
+DECLARE_HANDLER(usagefault);
+#undef DECLARE_HANDLER
 
 #define DECLARE_IRQ(name) extern "C" void irq_ ## name() __attribute__((weak, alias("handler_fault")))
 DECLARE_IRQ(wwdg);

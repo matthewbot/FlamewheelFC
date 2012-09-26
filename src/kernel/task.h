@@ -18,6 +18,11 @@ struct TaskRegs {
 	uint32_t xPSR;
 };
 
+struct TaskFPURegs {
+	float s[32];
+	uint32_t FPSCR;
+};
+
 struct ListNode {
 	ListNode *next;
 	ListNode *prev;
@@ -59,6 +64,7 @@ struct Task {
 		void *sp;
 		TaskRegs *regs;
 	};
+	TaskFPURegs fpuregs;
 
 	char name[14];
 	uint8_t priority;
