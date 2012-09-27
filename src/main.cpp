@@ -9,7 +9,7 @@ int main() {
 	debug_init();
 	rgbled_init();
 
-	rgbled_set(0xFFA000, 250);
+	rgbled_set(0xFFAF00, 1000);
 
 	while (true) {
 		debug_puts("Hello World!\r\n");
