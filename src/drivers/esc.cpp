@@ -1,4 +1,5 @@
 #include "drivers/esc.h"
+#include "drivers/util.h"
 #include "kernel/kernel.h"
 #include <stm32f4xx.h>
 
@@ -20,9 +21,9 @@ void esc_init() {
 	TIM4->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
 	TIM4->CR1 = TIM_CR1_CEN;
 
-	GPIOB->AFR[0] |= 0x22000000;
-	GPIOB->AFR[1] |= 0x00000022;
-	GPIOB->MODER |= 0x000AA000;
+	GPIOB->AFR[0] |= AFRL(7, 2) | AFRL(6, 2);
+	GPIOB->AFR[1] |= AFRH(9, 2) | AFRH(8, 2);
+	GPIOB->MODER |= MODER_AF(9) | MODER_AF(8) | MODER_AF(7) | MODER_AF(6);
 }
 
 void esc_arm() {

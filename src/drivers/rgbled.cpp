@@ -1,4 +1,5 @@
 #include "rgbled.h"
+#include "util.h"
 #include <stm32f4xx.h>
 
 static uint32_t rgb;
@@ -23,10 +24,10 @@ void rgbled_init() {
 	TIM1->BDTR = TIM_BDTR_MOE;
 	TIM1->CR1 = TIM_CR1_CEN;
 
-	NVIC->ISER[0] = 1 << TIM1_UP_TIM10_IRQn;
+	util_enable_irq(TIM1_UP_TIM10_IRQn, 15);
 
-	GPIOB->AFR[1] |= 0x11100000;
-	GPIOB->MODER |= 0xA8000000;
+	GPIOB->AFR[1] |= AFRH(13, 1) | AFRH(14, 1) | AFRH(15, 1);
+	GPIOB->MODER |= MODER_AF(13) | MODER_AF(14) | MODER_AF(15);
 }
 
 void rgbled_set(uint32_t newrgb, uint16_t newperiod) {
