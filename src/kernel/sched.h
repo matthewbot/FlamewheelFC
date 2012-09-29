@@ -3,20 +3,16 @@
 
 #include "task.h"
 
-typedef uint32_t Tick;
-
-Tick sched_now();
-Task *sched_current_task();
-void sched_sleep(Tick ticks);
+inline uint32_t sched_now() { extern uint32_t curtick; return curtick; }
+inline Task *sched_current_task() { extern Task *curtask; return curtask; }
 void sched_yield();
 
-// must be invoked in kernel critical section
 void sched_add_task(Task &task);
 void sched_remove_task(Task &task);
-void sched_add_task_tick(Task &task, Tick tick);
+void sched_add_task_tick(Task &task, uint32_t tick);
 void sched_cancel_task_tick(Task &task);
 
-// kernel APIs only
+// kernel startup APIs
 void sched_add_task_initial(Task &task);
 void sched_start() __attribute__((noreturn));
 void sched_tick();

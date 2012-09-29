@@ -4,25 +4,13 @@
 #include <stddef.h>
 #include <stm32f4xx.h>
 
-static Task *curtask;
+Task *curtask; // not static to be used in inline functions
+uint32_t curtick;
 static Task *curfputask;
-static Tick curtick;
-
-Tick sched_now() {
-	return curtick;
-}
-
-void sched_sleep(Tick ticks) {
-	KernelCriticalSection crit;
-	sched_remove_task(*curtask);
-	sched_add_task_tick(*curtask, curtick + ticks);
-}
 
 void sched_yield() {
 	SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
 }
-
-Task *sched_current_task() { return curtask; }
 
 static Task *nexttask;
 static ListNode schedlist;
@@ -57,8 +45,8 @@ void sched_remove_task(Task &task) {
 		sched_yield();
 }
 
-void sched_add_task_tick(Task &task, Tick tick) {
-	task.waketick = tick;
+void sched_add_task_tick(Task &task, uint32_t tick) {
+	task.waketick = curtick+tick;
 	task.state = Task::State::SLEEP;
 	task.insert_list_waketick_sorted(ticklist);
 }
@@ -79,7 +67,7 @@ void sched_start() {
 	__builtin_unreachable();
 }
 
-extern "C" void handler_svcall() __attribute__((naked));
+extern "C" void handler_svcall() __attribute__((naked, noreturn));
 extern "C" void handler_svcall() {
 	asm("ldr sp, =__main_stack_end;" // reset stack pointer, it'll be used for IRQs from now on
 	    "ldr r0, =%[curtask];" // get address of current task pointer
@@ -92,6 +80,7 @@ extern "C" void handler_svcall() {
 	    ::
 	     [sp] "i" (offsetof(Task, sp)),
 	     [curtask] "i" (&curtask));
+	__builtin_unreachable();
 }
 
 static void sched();
@@ -182,7 +171,7 @@ extern "C" void handler_usagefault() {
 	    );
 }
 
-void sched_tick() {
+extern "C" void handler_systick() {
 	curtick++;
 
 	Task *pos = ticklist_head();

@@ -87,5 +87,6 @@ struct Task {
 };
 
 #define DECLARE_TASK_STACK(name, bytes) static uint8_t name[bytes] __attribute__((section(".stack")))
+#define DECLARE_TASK_FUNC(name) static void name(void *unused) __attribute__((noreturn))
 
 #endif

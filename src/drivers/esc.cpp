@@ -1,5 +1,5 @@
-#include "esc.h"
-#include "kernel/sched.h"
+#include "drivers/esc.h"
+#include "kernel/kernel.h"
 #include <stm32f4xx.h>
 
 // TODO group these into a header
@@ -28,7 +28,7 @@ void esc_init() {
 void esc_arm() {
 	for (int i=0; i<4; i++)
 		esc_set(i, 0);
-	sched_sleep(5000);
+	kernel_sleep(5000);
 }
 
 void esc_set(int esc, int pwm) {

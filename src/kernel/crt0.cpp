@@ -1,5 +1,5 @@
 #include "linker.h"
-#include "kernel.h"
+#include "kmain.h"
 #include <stdint.h>
 #include <cstdlib>
 #include "stm32f4xx.h"
@@ -13,7 +13,7 @@ extern "C" void handler_reset() {
 	setup_clock();
 	copy(&__data_start, &__data_end, &__data_load);
 	fill(&__bss_start, &__bss_end, 0);
-	kernel_start();
+	kmain();
 }
 
 #define RCC_CFGR_RTCPRE_POS 16
