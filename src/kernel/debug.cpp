@@ -68,7 +68,8 @@ static void printreg(const char *name, uint32_t val);
 
 extern "C" void handler_fault() __attribute__((naked, noreturn));
 extern "C" void handler_fault() {
-	asm volatile("tst lr, 0b0100;"
+	asm volatile("cpsid i;"
+	             "tst lr, 0b0100;"
 	             "ittee ne;"
 	             "mrsne r0, psp;"
 	             "stmdbne r0!, {r4-r11};"

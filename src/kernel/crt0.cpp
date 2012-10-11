@@ -49,19 +49,17 @@ static void fill(uint32_t *start, const uint32_t *end, uint32_t val) {
 		*start++ = val;
 }
 
-extern "C" void handler_fault() __attribute__((weak));
-extern "C" void handler_fault() {
-	while (true) { }
-}
+extern "C" void handler_fault();
+extern "C" void crt0_fault() { handler_fault(); }
 
-#define DECLARE_HANDLER(name) extern "C" void handler_ ## name() __attribute((weak, alias("handler_fault")))
+#define DECLARE_HANDLER(name) extern "C" void handler_ ## name() __attribute((weak, alias("crt0_fault")))
 DECLARE_HANDLER(svcall);
 DECLARE_HANDLER(pendsv);
 DECLARE_HANDLER(systick);
 DECLARE_HANDLER(usagefault);
 #undef DECLARE_HANDLER
 
-#define DECLARE_IRQ(name) extern "C" void irq_ ## name() __attribute__((weak, alias("handler_fault")))
+#define DECLARE_IRQ(name) extern "C" void irq_ ## name() __attribute__((weak, alias("crt0_fault")))
 DECLARE_IRQ(wwdg);
 DECLARE_IRQ(pvd);
 DECLARE_IRQ(tamp_stamp);

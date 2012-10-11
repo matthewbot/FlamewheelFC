@@ -3,11 +3,25 @@
 
 #include <stdint.h>
 
-void mpu_init();
-uint8_t mpu_read_reg(uint8_t reg);
-void mpu_write_reg(uint8_t reg, uint8_t val);
+struct MPUSample {
+	uint32_t samplenum;
+	int16_t accel[3];
+	int16_t temp;
+	int16_t gyro[3];
+};
 
-void mpu_ss(bool ss);
-uint8_t mpu_spi(uint8_t out);
+void mpu_init();
+
+enum class AccelFS : uint8_t { FS2G, FS4G, FS8G, FS16G };
+enum class GyroFS : uint8_t { FS200DS, FS500DS, FS1000DS, FS2000DS };
+
+void mpu_reset(AccelFS accel_fs, GyroFS gyro_fs, uint8_t dlpf, uint8_t samplerate_div);
+int mpu_get_accel_scale();
+int mpu_get_gyro_scale();
+int mpu_get_sample_rate();
+
+MPUSample mpu_sample(uint32_t samplenum=0);
+
+uint8_t readreg(uint8_t reg);
 
 #endif
