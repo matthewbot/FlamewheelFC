@@ -17,6 +17,10 @@ inline void util_enable_irq(int irqn, uint8_t priority) {
 		NVIC->IP[irqn] = priority << 4;
 }
 
+inline void util_disable_irq(int irqn) {
+	NVIC->ICER[irqn / 32] = 1 << (irqn % 32);
+}
+
 inline void util_delay(int cycles) {
 	while (cycles--) { __asm volatile("nop"); }
 }
