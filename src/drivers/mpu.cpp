@@ -5,6 +5,8 @@
 #include <stm32f4xx.h>
 
 #define SPI_CR1_BR_DIV128 (SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_BR_0)
+#define DMA_SxCR_CHSEL_Pos 25
+#define DMA_SxCR_DIR_MEM2PER DMA_SxCR_DIR_0
 
 // state
 static AccelFS accel_fs;
@@ -20,6 +22,15 @@ static constexpr int PIN_MISO = 6;
 static constexpr int PIN_MOSI = 7;
 static constexpr int PIN_INT = 4;
 static constexpr int AF_SPI1 = 5;
+
+// DMA constants
+static constexpr int tx_stream_num = 3;
+static constexpr DMA_Stream_TypeDef *tx_stream = DMA2_Stream3;
+static constexpr int rx_stream_num = 0;
+static constexpr DMA_Stream_TypeDef *rx_stream = DMA2_Stream0;
+
+// SPI constants
+static constexpr SPI_TypeDef *spi = SPI1;
 
 // MPU registers
 static constexpr int REG_SMPLRT_DIV = 25;
@@ -37,18 +48,26 @@ static constexpr int REG_WHO_AM_I = 117;
 // utility functions
 //static uint8_t readreg(uint8_t reg);
 static void writereg(uint8_t reg, uint8_t val);
-static uint16_t spi16(uint16_t val);
-static uint8_t spi(uint8_t val);
+static uint8_t sendrecv(uint8_t val);
 static void ss(bool val);
+
+static const uint8_t read_cmd[] = {
+	REG_ACCEL_XOUT_H | (1 << 7), // read register
+	0, 0, 0, 0, 0, 0, // 6 bytes accels
+	0, 0, // 2 bytes temperature
+	0, 0, 0, 0, 0, 0}; // 6 bytes gyros
+
+static uint8_t read_buf[sizeof(read_cmd)];
 
 void mpu_init() {
 	// configure clocks
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_DMA2EN;
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN | RCC_APB2ENR_SPI1EN;
 	__DMB();
 
 	// enable SPI
-	SPI1->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_BR_DIV128 | SPI_CR1_MSTR | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_SPE;
+	spi->CR2 = SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN;
+	spi->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_BR_DIV128 | SPI_CR1_MSTR | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_SPE;
 
 	// configure GPIOs
 	GPIOA->BSRRL = (1 << PIN_NSS);
@@ -64,6 +83,7 @@ void mpu_init() {
 	mpu_reset(AccelFS::FS4G, GyroFS::FS500DS, 1, 0);
 
 	util_enable_irq(EXTI0_IRQn + PIN_INT, 0x20); // enable interrupt in NVIC
+	util_enable_irq(DMA2_Stream0_IRQn, 0xF0);
 }
 
 void mpu_reset(AccelFS new_accel_fs, GyroFS new_gyro_fs, uint8_t new_dlpf, uint8_t new_samplerate_div) {
@@ -94,22 +114,51 @@ MPUSample mpu_sample(uint32_t samplenum) {
 }
 
 extern "C" void irq_ext4() {
-	sample.samplenum++;
 	ss(true);
-	spi(REG_ACCEL_XOUT_H | (1 << 7));
-	for (int i=0; i<3; i++)
-		sample.accel[i] = spi16(0);
-	sample.temp = spi16(0);
-	for (int i=0; i<3; i++)
-		sample.gyro[i] = spi16(0);
+
+	rx_stream->PAR = (uint32_t)&spi->DR;
+	rx_stream->M0AR = (uint32_t)read_buf;
+	rx_stream->NDTR = sizeof(read_buf);
+	rx_stream->CR = (3 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_MINC | DMA_SxCR_TCIE;
+	rx_stream->CR |= DMA_SxCR_EN;
+	tx_stream->PAR = (uint32_t)&spi->DR;
+	tx_stream->M0AR = (uint32_t)read_cmd;
+	tx_stream->NDTR = sizeof(read_cmd);
+	tx_stream->CR = (3 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_MINC | DMA_SxCR_DIR_MEM2PER;
+	tx_stream->CR |= DMA_SxCR_EN;
+
+	EXTI->PR = (1 << 4);
+	util_disable_irq(EXTI0_IRQn + PIN_INT); // enable interrupt in NVIC
+}
+
+extern "C" void irq_dma2_stream0() {
 	ss(false);
-   	EXTI->PR = (1 << 4);
+
+	sample.num++;
+
+	const uint8_t *pos = read_buf;
+	pos++; // skip the register number
+	for (int i=0; i<3; i++) {
+		sample.accel[i] = pos[0] << 8 | pos[1];
+		pos += 2;
+	}
+
+	sample.temp = pos[0] << 8 | pos[1];
+	pos += 2;
+
+	for (int i=0; i<3; i++) {
+		sample.gyro[i] = pos[0] << 8 | pos[1];
+		pos += 2;
+	}
+
+	DMA2->LIFCR = DMA_LIFCR_CTCIF0 | DMA_LIFCR_CHTIF0 | DMA_LIFCR_CTCIF3 | DMA_LIFCR_CHTIF3;
+	util_enable_irq(EXTI0_IRQn + PIN_INT, 0xF0); // enable interrupt in NVIC
 }
 
 uint8_t readreg(uint8_t reg) {
 	ss(true);
-	spi(reg | (1 << 7));
-	uint8_t val = spi(0);
+	sendrecv(reg | (1 << 7));
+	uint8_t val = sendrecv(0);
 	ss(false);
 	util_delay(100);
 	return val;
@@ -117,8 +166,8 @@ uint8_t readreg(uint8_t reg) {
 
 static void writereg(uint8_t reg, uint8_t val) {
 	ss(true);
-	spi(reg);
-	spi(val);
+	sendrecv(reg);
+	sendrecv(val);
 	ss(false);
 	util_delay(100);
 }
@@ -131,15 +180,9 @@ static void ss(bool ss) {
 	__DMB();
 }
 
-static uint8_t spi(uint8_t val) {
-	while (!(SPI1->SR & SPI_SR_TXE)) { }
-	SPI1->DR = val;
-	while (!(SPI1->SR & SPI_SR_RXNE)) { }
-	return SPI1->DR;
-}
-
-static uint16_t spi16(uint16_t val) {
-	uint16_t data = spi(val >> 8) << 8;
-	data |= spi(val & 0xFF);
-	return data;
+static uint8_t sendrecv(uint8_t val) {
+	while (!(spi->SR & SPI_SR_TXE)) { }
+	spi->DR = val;
+	while (!(spi->SR & SPI_SR_RXNE)) { }
+	return spi->DR;
 }

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 struct MPUSample {
-	uint32_t samplenum;
+	uint32_t num;
 	int16_t accel[3];
 	int16_t temp;
 	int16_t gyro[3];

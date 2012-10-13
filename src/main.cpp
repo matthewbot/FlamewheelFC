@@ -11,15 +11,15 @@ int main() {
 	uart_init();
 	rgbled_init();
 	mpu_init();
-	rgbled_set(0xFF9000, 2000);
+	rgbled_set(0x00E033, 2000);
 
 	while (true) {
 		kernel_sleep(1);
 		MPUSample sample = mpu_sample();
 		for (int i=0; i<3; i++)
-			uart << sample.accel[i] << ",";
+			uart << sample.accel[i] << ",\t";
 		for (int i=0; i<3; i++)
-			uart << sample.gyro[i] << ",";
+			uart << sample.gyro[i] << ",\t";
 		uart << endl;
 	}
 }
