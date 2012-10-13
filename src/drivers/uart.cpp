@@ -13,10 +13,7 @@ static constexpr int baud = 1152000;
 static constexpr float bauddiv = 84e6 / (baud*16);
 static constexpr uint32_t brr = bauddiv*16 + 0.5f;
 
-static char buf[256];
-static uint8_t readpos;
-static uint8_t writepos;
-static uint8_t count;
+static RingBuffer<uint8_t, 128> buf;
 
 void uart_init() {
 	// enable clocks
@@ -36,11 +33,8 @@ void uart_init() {
 
 void uart_puts(const char *out) {
 	KernelCriticalSection crit;
-	while (*out != '\0' && count < sizeof(buf)) {
-		buf[writepos] = *out++;
-		writepos = (writepos+1) % sizeof(buf);
-		count++;
-	}
+	while (*out != '\0' && !buf.full())
+		buf.put(*out++);
 	USART1->CR1 |= USART_CR1_TXEIE;
 }
 
@@ -53,16 +47,14 @@ void uart_putint(int i) {
 extern "C" void irq_usart1() {
 	uint32_t sr = USART1->SR;
 	if (sr & USART_SR_TXE) {
-		if (readpos == writepos) {
+		if (buf.empty()) {
 			USART1->CR1 &= ~USART_CR1_TXEIE;
 			return;
 		}
 
-		USART1->DR = buf[readpos];
-		readpos = (readpos+1) % sizeof(buf);
-		count--;
+		USART1->DR = buf.get();
 
-		if (readpos == writepos)
+		if (buf.empty())
 			USART1->CR1 &= ~USART_CR1_TXEIE;
 	}
 }

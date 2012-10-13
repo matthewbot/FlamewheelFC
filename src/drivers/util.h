@@ -2,6 +2,7 @@
 #define FC_DRIVERS_UTIL_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stm32f4xx.h>
 
 constexpr uint32_t AFRL(int pin, int af) { return af << (4*pin); }
@@ -24,5 +25,44 @@ inline void util_disable_irq(int irqn) {
 inline void util_delay(int cycles) {
 	while (cycles--) { __asm volatile("nop"); }
 }
+
+template <typename T, size_t N>
+class RingBuffer {
+public:
+	void reset() {
+		readpos = writepos = cnt = 0;
+	}
+
+	bool full() const {
+		return cnt == N;
+	}
+
+	bool empty() const {
+		return cnt == 0;
+	}
+
+	size_t count() const {
+		return cnt;
+	}
+
+	void put(T val) {
+		buf[writepos++] = val;
+		writepos %= N;
+		cnt++;
+	}
+
+	T get() {
+		T val = buf[readpos++];
+		readpos %= N;
+		cnt--;
+		return val;
+	}
+
+private:
+	int writepos;
+	int readpos;
+	int cnt;
+	T buf[N];
+};
 
 #endif
