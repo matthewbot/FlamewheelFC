@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "kernel/sched.h"
 
-static const uint8_t KERNEL_IRQ_PRIORITY = 0xA0;
+constexpr uint8_t KERNEL_IRQ_PRIORITY = 0xF0;
 
 void kernel_enter_critical();
 void kernel_leave_critical();

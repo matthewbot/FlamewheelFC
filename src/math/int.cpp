@@ -12,7 +12,7 @@ char *itoan(int val, char *buf, size_t len) {
 		buf[--i] = '0';
 	} else {
 		while (val && i) {
-			buf[--i] = "0123456789"[val % 10];
+			buf[--i] = (val % 10) + '0';
 			val /= 10;
 		}
 	}

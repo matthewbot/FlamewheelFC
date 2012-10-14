@@ -46,10 +46,11 @@ static constexpr int REG_PWR_MGMT_2 = 108;
 static constexpr int REG_WHO_AM_I = 117;
 
 // utility functions
-//static uint8_t readreg(uint8_t reg);
+static uint8_t readreg(uint8_t reg);
 static void writereg(uint8_t reg, uint8_t val);
 static uint8_t sendrecv(uint8_t val);
 static void ss(bool val);
+static int16_t next16(const uint8_t *&pos);
 
 static const uint8_t read_cmd[] = {
 	REG_ACCEL_XOUT_H | (1 << 7), // read register
@@ -64,6 +65,19 @@ void mpu_init() {
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_DMA2EN;
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN | RCC_APB2ENR_SPI1EN;
 	__DMB();
+
+	// configure receive stream on DMA
+	rx_stream->PAR = (uint32_t)&spi->DR;
+	rx_stream->M0AR = (uint32_t)read_buf;
+	rx_stream->NDTR = sizeof(read_buf);
+	rx_stream->CR = (3 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_MINC | DMA_SxCR_TCIE;
+	util_enable_irq(DMA2_Stream0_IRQn, IRQ_PRI_KERNEL);
+
+	// configure transmit stream on DMA
+	tx_stream->PAR = (uint32_t)&spi->DR;
+	tx_stream->M0AR = (uint32_t)read_cmd;
+	tx_stream->NDTR = sizeof(read_cmd);
+	tx_stream->CR = (3 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_MINC | DMA_SxCR_DIR_MEM2PER;
 
 	// enable SPI
 	spi->CR2 = SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN;
@@ -82,8 +96,7 @@ void mpu_init() {
 	// set up MPU
 	mpu_reset(AccelFS::FS4G, GyroFS::FS500DS, 1, 0);
 
-	util_enable_irq(EXTI0_IRQn + PIN_INT, 0x20); // enable interrupt in NVIC
-	util_enable_irq(DMA2_Stream0_IRQn, 0xF0);
+	util_enable_irq(EXTI0_IRQn + PIN_INT, IRQ_PRI_HIGH); // enable interrupt in NVIC
 }
 
 void mpu_reset(AccelFS new_accel_fs, GyroFS new_gyro_fs, uint8_t new_dlpf, uint8_t new_samplerate_div) {
@@ -113,49 +126,41 @@ MPUSample mpu_sample(uint32_t samplenum) {
 	return sample;
 }
 
+// interrupt when MPU assert INT
 extern "C" void irq_ext4() {
 	ss(true);
 
-	rx_stream->PAR = (uint32_t)&spi->DR;
-	rx_stream->M0AR = (uint32_t)read_buf;
-	rx_stream->NDTR = sizeof(read_buf);
-	rx_stream->CR = (3 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_MINC | DMA_SxCR_TCIE;
+	// start DMA
 	rx_stream->CR |= DMA_SxCR_EN;
-	tx_stream->PAR = (uint32_t)&spi->DR;
-	tx_stream->M0AR = (uint32_t)read_cmd;
-	tx_stream->NDTR = sizeof(read_cmd);
-	tx_stream->CR = (3 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_MINC | DMA_SxCR_DIR_MEM2PER;
 	tx_stream->CR |= DMA_SxCR_EN;
 
-	EXTI->PR = (1 << 4);
-	util_disable_irq(EXTI0_IRQn + PIN_INT); // enable interrupt in NVIC
+	util_disable_irq(EXTI0_IRQn + PIN_INT); // disable this interrupt
+	EXTI->PR = (1 << 4); // clear pending
 }
 
+// called when receiver DMA completes its transfer
 extern "C" void irq_dma2_stream0() {
 	ss(false);
 
 	sample.num++;
+	const uint8_t *pos = read_buf+1; // skip over the command byte
+	for (int i=0; i<3; i++) // parse all values into sample structure
+		sample.accel[i] = next16(pos);
+	sample.temp = next16(pos);
+	for (int i=0; i<3; i++)
+		sample.gyro[i] = next16(pos);
 
-	const uint8_t *pos = read_buf;
-	pos++; // skip the register number
-	for (int i=0; i<3; i++) {
-		sample.accel[i] = pos[0] << 8 | pos[1];
-		pos += 2;
-	}
-
-	sample.temp = pos[0] << 8 | pos[1];
-	pos += 2;
-
-	for (int i=0; i<3; i++) {
-		sample.gyro[i] = pos[0] << 8 | pos[1];
-		pos += 2;
-	}
-
-	DMA2->LIFCR = DMA_LIFCR_CTCIF0 | DMA_LIFCR_CHTIF0 | DMA_LIFCR_CTCIF3 | DMA_LIFCR_CHTIF3;
-	util_enable_irq(EXTI0_IRQn + PIN_INT, 0xF0); // enable interrupt in NVIC
+	DMA2->LIFCR = DMA_LIFCR_CTCIF0 | DMA_LIFCR_CHTIF0 | DMA_LIFCR_CTCIF3 | DMA_LIFCR_CHTIF3; // clear status bits
+	util_enable_irq(EXTI0_IRQn + PIN_INT); // enable INT interrupt
 }
 
-uint8_t readreg(uint8_t reg) {
+static int16_t next16(const uint8_t *&pos) {
+	int16_t val = pos[0] << 8 | pos[1];
+	pos += 2;
+	return val;
+}
+
+static uint8_t readreg(uint8_t reg) {
 	ss(true);
 	sendrecv(reg | (1 << 7));
 	uint8_t val = sendrecv(0);

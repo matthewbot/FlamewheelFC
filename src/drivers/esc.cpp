@@ -9,6 +9,12 @@
 #define TIM_CCMR2_OC3M_PWM1 (TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2)
 #define TIM_CCMR2_OC4M_PWM1 (TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2)
 
+static constexpr int PIN_0 = 6;
+static constexpr int PIN_1 = 7;
+static constexpr int PIN_2 = 8;
+static constexpr int PIN_3 = 9;
+static constexpr int AF_TIM4 = 2;
+
 void esc_init() {
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
@@ -21,9 +27,9 @@ void esc_init() {
 	TIM4->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
 	TIM4->CR1 = TIM_CR1_CEN;
 
-	GPIOB->AFR[0] |= AFRL(7, 2) | AFRL(6, 2);
-	GPIOB->AFR[1] |= AFRH(9, 2) | AFRH(8, 2);
-	GPIOB->MODER |= MODER_AF(9) | MODER_AF(8) | MODER_AF(7) | MODER_AF(6);
+	GPIOB->AFR[0] |= AFRL(PIN_0, AF_TIM4) | AFRL(PIN_1, AF_TIM4);
+	GPIOB->AFR[1] |= AFRH(PIN_2, AF_TIM4) | AFRH(PIN_2, AF_TIM4);
+	GPIOB->MODER |= MODER_AF(PIN_0) | MODER_AF(PIN_1) | MODER_AF(PIN_2) | MODER_AF(PIN_3);
 }
 
 void esc_arm() {

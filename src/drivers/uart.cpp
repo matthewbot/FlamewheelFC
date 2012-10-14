@@ -5,10 +5,13 @@
 #include <stdlib.h>
 #include <stm32f4xx.h>
 
+// pin constants
 static constexpr int PIN_TX = 9;
 static constexpr int PIN_RX = 10;
 static constexpr int AF_USART1 = 7;
 
+// uart constants
+static constexpr USART_TypeDef *usart = USART1;
 static constexpr int baud = 1152000;
 static constexpr float bauddiv = 84e6 / (baud*16);
 static constexpr uint32_t brr = bauddiv*16 + 0.5f;
@@ -22,9 +25,9 @@ void uart_init() {
 	__DMB();
 
 	// set up USART
-	USART1->BRR = brr;
-	USART1->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
-	util_enable_irq(USART1_IRQn, 0xFF);
+	usart->BRR = brr;
+	usart->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+	util_enable_irq(USART1_IRQn, IRQ_PRI_LOW);
 
 	// set up GPIOs
 	GPIOA->AFR[1] |= AFRH(PIN_TX, AF_USART1) | AFRH(PIN_RX, AF_USART1);
@@ -32,10 +35,10 @@ void uart_init() {
 }
 
 void uart_puts(const char *out) {
-	KernelCriticalSection crit;
+	IRQCriticalSection<USART1_IRQn> crit;
 	while (*out != '\0' && !buf.full())
 		buf.put(*out++);
-	USART1->CR1 |= USART_CR1_TXEIE;
+	usart->CR1 |= USART_CR1_TXEIE;
 }
 
 void uart_putint(int i) {
@@ -45,16 +48,13 @@ void uart_putint(int i) {
 }
 
 extern "C" void irq_usart1() {
-	uint32_t sr = USART1->SR;
-	if (sr & USART_SR_TXE) {
-		if (buf.empty()) {
-			USART1->CR1 &= ~USART_CR1_TXEIE;
-			return;
-		}
-
-		USART1->DR = buf.get();
-
-		if (buf.empty())
-			USART1->CR1 &= ~USART_CR1_TXEIE;
+	if (buf.empty()) {
+		usart->CR1 &= ~USART_CR1_TXEIE;
+		return;
 	}
+
+	usart->DR = buf.get();
+
+	if (buf.empty())
+		usart->CR1 &= ~USART_CR1_TXEIE;
 }
