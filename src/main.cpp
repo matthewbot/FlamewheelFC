@@ -9,7 +9,7 @@ int main() {
     uart_init();
     rgbled_init();
     mpu_init();
-    rgbled_set(0x00FF20, 2000);
+    rgbled_set(0x00FF20, 100);
 
     while (true) {
         MPUSample sample = mpu_sample();
