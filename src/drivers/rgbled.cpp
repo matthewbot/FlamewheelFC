@@ -1,14 +1,10 @@
-#include "rgbled.h"
-#include "util.h"
-#include <stm32f4xx.h>
+#include "drivers/rgbled.h"
+#include "drivers/util.h"
+#include "drivers/stm32f4xx_exts.h"
 
 static uint32_t rgb;
 static uint16_t period;
 static uint16_t fadectr;
-
-#define TIM_CCMR1_OC1M_PWM1 (TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2)
-#define TIM_CCMR1_OC2M_PWM1 (TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2)
-#define TIM_CCMR2_OC3M_PWM1 (TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2)
 
 static constexpr int PIN_R = 14;
 static constexpr int PIN_B = 13;

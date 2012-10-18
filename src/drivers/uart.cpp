@@ -1,9 +1,9 @@
 #include "drivers/uart.h"
 #include "drivers/util.h"
+#include "drivers/stm32f4xx_exts.h"
 #include "math/int.h"
-#include "kernel/kernel.h"
+#include "kernel/sched.h"
 #include <stdlib.h>
-#include <stm32f4xx.h>
 
 // pin constants
 static constexpr int PIN_TX = 9;
@@ -12,9 +12,7 @@ static constexpr int AF_USART1 = 7;
 
 // uart constants
 static constexpr USART_TypeDef *usart = USART1;
-static constexpr int baud = 1152000;
-static constexpr float bauddiv = 84e6 / (baud*16);
-static constexpr uint32_t brr = bauddiv*16 + 0.5f;
+static constexpr uint32_t brr = UART_BRR(84e6, 1152000);
 
 static RingBuffer<uint8_t, 128> buf;
 

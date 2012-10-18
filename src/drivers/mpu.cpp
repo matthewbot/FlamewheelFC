@@ -1,13 +1,9 @@
 #include "drivers/mpu.h"
 #include "drivers/util.h"
+#include "drivers/stm32f4xx_exts.h"
 #include "kernel/sched.h"
 #include "kernel/debug.h"
 #include "kernel/sync.h"
-#include <stm32f4xx.h>
-
-#define SPI_CR1_BR_DIV128 (SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_BR_0)
-#define DMA_SxCR_CHSEL_Pos 25
-#define DMA_SxCR_DIR_MEM2PER DMA_SxCR_DIR_0
 
 // state
 static AccelFS accel_fs;

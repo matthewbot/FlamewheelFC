@@ -1,13 +1,7 @@
 #include "drivers/esc.h"
 #include "drivers/util.h"
+#include "drivers/stm32f4xx_exts.h"
 #include "kernel/kernel.h"
-#include <stm32f4xx.h>
-
-// TODO group these into a header
-#define TIM_CCMR1_OC1M_PWM1 (TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2)
-#define TIM_CCMR1_OC2M_PWM1 (TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2)
-#define TIM_CCMR2_OC3M_PWM1 (TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2)
-#define TIM_CCMR2_OC4M_PWM1 (TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2)
 
 static constexpr int PIN_0 = 6;
 static constexpr int PIN_1 = 7;

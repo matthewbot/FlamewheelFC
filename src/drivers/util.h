@@ -14,6 +14,9 @@ constexpr uint32_t MODER_OUT(int pin) { return 1 << (2*pin); }
 constexpr uint32_t MODER_AF(int pin) { return 2 << (2*pin); }
 constexpr uint32_t MODER_AN(int pin) { return 3 << (2*pin); }
 
+// GPIO utilities
+constexpr uint32_t UART_BRR(int clk, int baud) { return (float)clk / baud + 0.5f; }
+
 // NVIC utilities
 constexpr uint8_t IRQ_PRI_KERNEL = 0xF;
 constexpr uint8_t IRQ_PRI_LOW = 0xE;
