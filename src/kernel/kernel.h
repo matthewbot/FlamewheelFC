@@ -10,8 +10,8 @@ void kernel_enter_critical();
 void kernel_leave_critical();
 
 struct KernelCriticalSection {
-	KernelCriticalSection() { kernel_enter_critical(); }
-	~KernelCriticalSection() { kernel_leave_critical(); }
+    KernelCriticalSection() { kernel_enter_critical(); }
+    ~KernelCriticalSection() { kernel_leave_critical(); }
 };
 
 void kernel_halt(const char *msg);
