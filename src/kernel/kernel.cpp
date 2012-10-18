@@ -16,14 +16,6 @@ void kernel_leave_critical() {
 		__set_BASEPRI(0);
 }
 
-void kernel_sleep(uint32_t ticks) {
-	Task *curtask = sched_current_task();
-
-	KernelCriticalSection crit;
-	sched_remove_task(*curtask);
-	sched_add_task_tick(*curtask, ticks);
-}
-
 void kernel_halt(const char *msg) {
 	debug_init();
 	__disable_irq();

@@ -35,7 +35,7 @@ void esc_init() {
 void esc_arm() {
 	for (int i=0; i<4; i++)
 		esc_set(i, 0);
-	kernel_sleep(5000);
+	sched_sleep(5000);
 }
 
 void esc_set(int esc, int pwm) {

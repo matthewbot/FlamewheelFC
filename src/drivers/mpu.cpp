@@ -106,7 +106,7 @@ void mpu_reset(AccelFS new_accel_fs, GyroFS new_gyro_fs, uint8_t new_dlpf, uint8
 	samplerate_div = new_samplerate_div;
 
 	writereg(REG_PWR_MGMT_1, 1 << 7); // reset MPU
-	kernel_sleep(100);
+	sched_sleep(100);
 	writereg(REG_PWR_MGMT_1, 3); // clock source is z gyro
 	writereg(REG_PWR_MGMT_2, 0);
 	writereg(REG_USER_CTRL, (1 << 4)); // disable I2C interface

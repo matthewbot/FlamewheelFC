@@ -12,6 +12,12 @@ void sched_yield() {
 	SCB->ICSR = SCB_ICSR_PENDSVSET_Msk;
 }
 
+void sched_sleep(uint32_t ticks) {
+	KernelCriticalSection crit;
+	sched_remove_task(*curtask);
+	sched_add_task_tick(*curtask, ticks);
+}
+
 static Task *nexttask;
 static ListNode schedlist;
 static ListNode ticklist;

@@ -14,10 +14,6 @@ struct KernelCriticalSection {
 	~KernelCriticalSection() { kernel_leave_critical(); }
 };
 
-inline uint32_t kernel_now() { return sched_now(); }
-inline Task *kernel_current_task() { return sched_current_task(); }
-void kernel_sleep(uint32_t ticks);
-inline void kernel_yield() { sched_yield(); }
 void kernel_halt(const char *msg);
 
 #endif

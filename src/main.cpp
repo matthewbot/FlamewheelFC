@@ -14,7 +14,7 @@ int main() {
 	rgbled_set(0x00E033, 2000);
 
 	while (true) {
-		kernel_sleep(1);
+		sched_sleep(1);
 		MPUSample sample = mpu_sample();
 		for (int i=0; i<3; i++)
 			uart << sample.accel[i] << ",\t";
