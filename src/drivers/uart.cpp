@@ -17,42 +17,42 @@ static constexpr uint32_t brr = UART_BRR(84e6, 1152000);
 static RingBuffer<uint8_t, 128> buf;
 
 void uart_init() {
-	// enable clocks
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-	__DMB();
+    // enable clocks
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+    __DMB();
 
-	// set up USART
-	usart->BRR = brr;
-	usart->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
-	util_enable_irq(USART1_IRQn, IRQ_PRI_LOW);
+    // set up USART
+    usart->BRR = brr;
+    usart->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+    util_enable_irq(USART1_IRQn, IRQ_PRI_LOW);
 
-	// set up GPIOs
-	GPIOA->AFR[1] |= AFRH(PIN_TX, AF_USART1) | AFRH(PIN_RX, AF_USART1);
-	GPIOA->MODER |= MODER_AF(PIN_TX) | MODER_AF(PIN_RX);
+    // set up GPIOs
+    GPIOA->AFR[1] |= AFRH(PIN_TX, AF_USART1) | AFRH(PIN_RX, AF_USART1);
+    GPIOA->MODER |= MODER_AF(PIN_TX) | MODER_AF(PIN_RX);
 }
 
 void uart_puts(const char *out) {
-	IRQCriticalSection<USART1_IRQn> crit;
-	while (*out != '\0' && !buf.full())
-		buf.put(*out++);
-	usart->CR1 |= USART_CR1_TXEIE;
+    IRQCriticalSection<USART1_IRQn> crit;
+    while (*out != '\0' && !buf.full())
+        buf.put(*out++);
+    usart->CR1 |= USART_CR1_TXEIE;
 }
 
 void uart_putint(int i) {
-	char buf[16];
-	char *pos = itoan(i, buf, sizeof(buf));
-	uart_puts(pos);
+    char buf[16];
+    char *pos = itoan(i, buf, sizeof(buf));
+    uart_puts(pos);
 }
 
 extern "C" void irq_usart1() {
-	if (buf.empty()) {
-		usart->CR1 &= ~USART_CR1_TXEIE;
-		return;
-	}
+    if (buf.empty()) {
+        usart->CR1 &= ~USART_CR1_TXEIE;
+        return;
+    }
 
-	usart->DR = buf.get();
+    usart->DR = buf.get();
 
-	if (buf.empty())
-		usart->CR1 &= ~USART_CR1_TXEIE;
+    if (buf.empty())
+        usart->CR1 &= ~USART_CR1_TXEIE;
 }

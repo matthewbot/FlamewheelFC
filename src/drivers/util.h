@@ -24,67 +24,67 @@ constexpr uint8_t IRQ_PRI_MED = 0x9;
 constexpr uint8_t IRQ_PRI_HIGH = 0x4;
 
 inline void util_enable_irq(int irqn) {
-	NVIC->ISER[irqn / 32] = 1 << (irqn % 32);
+    NVIC->ISER[irqn / 32] = 1 << (irqn % 32);
 }
 
 inline void util_enable_irq(int irqn, uint8_t priority) {
-	util_enable_irq(irqn);
-	if (priority != 0)
-		NVIC->IP[irqn] = priority << 4;
+    util_enable_irq(irqn);
+    if (priority != 0)
+        NVIC->IP[irqn] = priority << 4;
 }
 
 inline void util_disable_irq(int irqn) {
-	NVIC->ICER[irqn / 32] = 1 << (irqn % 32);
+    NVIC->ICER[irqn / 32] = 1 << (irqn % 32);
 }
 
 // Misc stuff
 inline void util_delay(int cycles) {
-	while (cycles--) { __asm volatile("nop"); }
+    while (cycles--) { __asm volatile("nop"); }
 }
 
 template <typename T, size_t N>
-class RingBuffer {
+    class RingBuffer {
 public:
-	void reset() {
-		readpos = writepos = cnt = 0;
-	}
+    void reset() {
+        readpos = writepos = cnt = 0;
+    }
 
-	bool full() const {
-		return cnt == N;
-	}
+    bool full() const {
+        return cnt == N;
+    }
 
-	bool empty() const {
-		return cnt == 0;
-	}
+    bool empty() const {
+        return cnt == 0;
+    }
 
-	size_t count() const {
-		return cnt;
-	}
+    size_t count() const {
+        return cnt;
+    }
 
-	void put(T val) {
-		buf[writepos++] = val;
-		writepos %= N;
-		cnt++;
-	}
+    void put(T val) {
+        buf[writepos++] = val;
+        writepos %= N;
+        cnt++;
+    }
 
-	T get() {
-		T val = buf[readpos++];
-		readpos %= N;
-		cnt--;
-		return val;
-	}
+    T get() {
+        T val = buf[readpos++];
+        readpos %= N;
+        cnt--;
+        return val;
+    }
 
 private:
-	int writepos;
-	int readpos;
-	int cnt;
-	T buf[N];
+    int writepos;
+    int readpos;
+    int cnt;
+    T buf[N];
 };
 
 template <int IRQ>
 struct IRQCriticalSection : public KernelCriticalSection {
-	IRQCriticalSection() { util_disable_irq(IRQ); }
-	~IRQCriticalSection() { util_enable_irq(IRQ); }
+    IRQCriticalSection() { util_disable_irq(IRQ); }
+    ~IRQCriticalSection() { util_enable_irq(IRQ); }
 };
 
 #endif
