@@ -17,6 +17,6 @@ struct MPUSample {
 	int16_t gyro[3];
 };
 
-MPUSample mpu_sample(uint32_t samplenum=0);
+MPUSample mpu_sample();
 
 #endif

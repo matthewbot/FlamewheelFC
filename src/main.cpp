@@ -5,21 +5,18 @@
 #include "drivers/rgbled.h"
 #include "drivers/mpu.h"
 
-extern "C" void irq_ext4();
-
 int main() {
-	uart_init();
-	rgbled_init();
-	mpu_init();
-	rgbled_set(0x00E033, 2000);
+    uart_init();
+    rgbled_init();
+    mpu_init();
+    rgbled_set(0x00FF20, 2000);
 
-	while (true) {
-		sched_sleep(1);
-		MPUSample sample = mpu_sample();
-		for (int i=0; i<3; i++)
-			uart << sample.accel[i] << ",\t";
-		for (int i=0; i<3; i++)
-			uart << sample.gyro[i] << ",\t";
-		uart << endl;
-	}
+    while (true) {
+        MPUSample sample = mpu_sample();
+        for (int i=0; i<3; i++)
+            uart << sample.accel[i] << ",\t";
+        for (int i=0; i<3; i++)
+            uart << sample.gyro[i] << ",\t";
+        uart << endl;
+    }
 }

@@ -1,7 +1,8 @@
 #include "drivers/mpu.h"
 #include "drivers/util.h"
-#include "kernel/kernel.h"
+#include "kernel/sched.h"
 #include "kernel/debug.h"
+#include "kernel/sync.h"
 #include <stm32f4xx.h>
 
 #define SPI_CR1_BR_DIV128 (SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_BR_0)
@@ -59,6 +60,7 @@ static const uint8_t read_cmd[] = {
 	0, 0, 0, 0, 0, 0}; // 6 bytes gyros
 
 static uint8_t read_buf[sizeof(read_cmd)];
+static Signal signal;
 
 void mpu_init() {
 	// configure clocks
@@ -122,8 +124,9 @@ void mpu_reset(AccelFS new_accel_fs, GyroFS new_gyro_fs, uint8_t new_dlpf, uint8
 	writereg(REG_INT_ENABLE, (1 << 0)); // turn on DATA_RDY_EN
 }
 
-MPUSample mpu_sample(uint32_t samplenum) {
-	return sample;
+MPUSample mpu_sample() {
+    signal.wait();
+    return sample;
 }
 
 // interrupt when MPU assert INT
@@ -150,6 +153,7 @@ extern "C" void irq_dma2_stream0() {
 	for (int i=0; i<3; i++)
 		sample.gyro[i] = next16(pos);
 
+        signal.notify_all(); // notify all tasks waiting
 	DMA2->LIFCR = DMA_LIFCR_CTCIF0 | DMA_LIFCR_CHTIF0 | DMA_LIFCR_CTCIF3 | DMA_LIFCR_CHTIF3; // clear status bits
 	util_enable_irq(EXTI0_IRQn + PIN_INT); // enable INT interrupt
 }
