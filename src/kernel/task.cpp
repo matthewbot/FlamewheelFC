@@ -45,5 +45,4 @@ void Task::setup(const char *name, uint8_t priority, TaskFunc func, void *funcda
 	regs->r0 = (uint32_t)funcdata;
 	this->priority = priority;
 	strncpy(this->name, name, sizeof(this->name));
-	this->stackguard = STACKGUARD_VALUE;
 }

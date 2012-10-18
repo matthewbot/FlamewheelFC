@@ -73,9 +73,6 @@ struct Task {
 	uint32_t waketick;
 
 	TaskPerf perf;
-	uint16_t stackguard;
-
-	static const uint16_t STACKGUARD_VALUE = 0xABCD;
 
 	void insert_list_priority_sorted(ListNode &node);
 	void insert_list_waketick_sorted(ListNode &node);
