@@ -34,8 +34,11 @@ void uart_init() {
 
 void uart_puts(const char *out) {
     IRQCriticalSection<USART1_IRQn> crit;
-    while (*out != '\0' && !buf.full())
+    while (*out != '\0') {
+        if (buf.full())
+            kernel_halt("uart_puts buffer full");
         buf.put(*out++);
+    }
     usart->CR1 |= USART_CR1_TXEIE;
 }
 
