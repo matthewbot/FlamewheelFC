@@ -159,7 +159,7 @@ extern "C" {
             &handler_fault,
             &handler_fault,
             &handler_fault,
-            &handler_fault,
+            &handler_usagefault,
             nullptr,
             nullptr,
             nullptr,

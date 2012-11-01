@@ -3,6 +3,7 @@
 
 #include <initializer_list>
 #include <stdint.h>
+#include <math.h>
 #include "type_traits.h"
 
 template <typename Self>
@@ -98,6 +99,7 @@ public:
 
     Element &operator()(int r, int c) __attribute__((always_inline)) { return data[r+c*M]; }
     Element operator()(int r, int c) const __attribute__((always_inline)) { return data[r+c*M]; }
+    Element &operator[](int i)  __attribute__((always_inline)) { static_assert(Cols == 1, "index access only valid on Vectors!"); return data[i]; }
     Element operator[](int i) const __attribute__((always_inline)) { static_assert(Cols == 1, "index access only valid on Vectors!"); return data[i]; }
 
     template <int SM, int SN>
@@ -121,6 +123,12 @@ public:
 
 template <typename T, int N>
 using Vector = Matrix<T, N, 1>;
+
+template <int M, int N>
+using MatrixF = Matrix<float, M, N>;
+
+template <int N>
+using VectorF = Vector<float, N>;
 
 template <typename OP, typename LHS, typename RHS>
 class BinaryMatrixOp : public MatrixExpr<BinaryMatrixOp<OP, LHS, RHS>> {
@@ -320,5 +328,18 @@ auto dot(const MatrixExpr<LHS> &lhs, const MatrixExpr<RHS> &rhs) ->
 template <typename LHS, typename RHS>
 auto cross(const MatrixExpr<LHS> &lhs, const MatrixExpr<RHS> &rhs) ->
     VectorCrossOp<LHS, RHS> { return { lhs.derived(), rhs.derived() }; }
+
+template <typename Expr>
+auto norm(const MatrixExpr<Expr> &expr) -> typename Expr::Element {
+    typename Expr::Element accum=0;
+    for (int r=0; r<Expr::Rows; r++) {
+        for (int c=0; c<Expr::Cols; c++) {
+            float val = expr.derived()(r, c);
+            accum += val*val;
+        }
+    }
+
+    return sqrtf(accum);
+}
 
 #endif
