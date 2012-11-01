@@ -5,7 +5,11 @@
 
 void mag_init();
 
-uint8_t mag_readreg(uint8_t addr);
-void mag_writereg(uint8_t addr, uint8_t val);
+struct MagSample {
+    uint32_t num;
+    int16_t x, y, z;
+};
+
+MagSample mag_sample();
 
 #endif
