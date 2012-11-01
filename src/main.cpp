@@ -3,28 +3,28 @@
 #include "kernel/kernel.h"
 #include "drivers/uart.h"
 #include "drivers/rgbled.h"
-#include "drivers/xbee.h"
+#include "drivers/mag.h"
 
 int main() {
     uart_init();
     rgbled_init();
-    rgbled_set(0xFF00A0, 100);
-    xbee_init();
+    rgbled_set(0x0000FF, 100);
+    mag_init();
 
+    sched_sleep(1000);
+
+    uart << "Configuring mag" << endl;
+    mag_writereg(0, 0x18);
+    mag_writereg(2, 0x00);
+
+    sched_sleep(500);
+
+    int i=0;
     while (true) {
-        uart << endl << "Waiting for message" << endl;
-
-        char buf[120];
-        XBeeReceiveHeader header;
-        int got = xbee_receive(buf, header);
-        uart << "Got " << got << " from " << header.addr << endl;
-        buf[got] = '\0';
-        uart << "Msg: " << buf << endl;
-
-        uart << "Sleeping" << endl;
-        sched_sleep(2000);
-
-        uart << "Sending" << endl;
-        xbee_send(1, buf, got);
+        int16_t x = (mag_readreg(3) << 8) | mag_readreg(4);
+        int16_t z = (mag_readreg(5) << 8) | mag_readreg(6);
+        int16_t y = (mag_readreg(7) << 8) | mag_readreg(8);
+        uart << "Reading: " << x << " " << y << " " << z << endl;
+        sched_sleep(100);
     }
 }
