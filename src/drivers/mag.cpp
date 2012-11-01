@@ -112,9 +112,9 @@ extern "C" void irq_exti1510() {
 extern "C" void irq_dma1_stream2() {
     const uint8_t *pos = read_buf;
     sample.num++;
-    sample.x = pos[0] << 8 | pos[1]; pos += 2;
-    sample.z = pos[0] << 8 | pos[1]; pos += 2;
-    sample.y = pos[0] << 8 | pos[1];
+    sample.field[0] = pos[0] << 8 | pos[1]; pos += 2;
+    sample.field[2] = pos[0] << 8 | pos[1]; pos += 2; // sensor goes X, Z, Y according to documentation
+    sample.field[1] = pos[0] << 8 | pos[1];
     DMA1->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2;
 
     i2c->CR1 &= ~I2C_CR1_ACK;

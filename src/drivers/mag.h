@@ -7,7 +7,7 @@ void mag_init();
 
 struct MagSample {
     uint32_t num;
-    int16_t x, y, z;
+    int16_t field[3];
 };
 
 MagSample mag_sample();
