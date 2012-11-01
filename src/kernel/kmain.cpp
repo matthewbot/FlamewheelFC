@@ -15,6 +15,7 @@ void kmain() {
     SCB->SHP[2] = SCB->SHP[7] = SCB->SHP[10] = SCB->SHP[11] = 0xF0;
     SCB->SHCSR = SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk;
     SCB->CCR = SCB_CCR_DIV_0_TRP_Msk;
+    FPU->FPCCR = 0;
 
     SysTick->LOAD = 168000 - 1;
     SysTick->CTRL = SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk;

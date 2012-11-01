@@ -143,19 +143,21 @@ extern "C" void handler_usagefault() __attribute__((naked));
 extern "C" void handler_usagefault() {
     asm("ldr r0, =%[CFSR];" // read CFSR address
         "ldr r0, [r0];" // read CFSR
-        "tst r0, %[CFSR_NOCP];" // if its not a NOCP fault
-        "beq handler_fault;" // head to normal fault handler
+        "cmp r0, %[CFSR_NOCP];" // if its not a NOCP fault
+        "bne handler_fault;" // head to normal fault handler
+        "movs r0, 0;" // clear NOCP bit
+        "str r1, [r0];" // write to CFSR to clear NOCP
         "ldr r0, =%[CPACR];" // otherwise load address of CPACR registers
         "movs r1, %[CPACR_CP10_CP11];" // load enable fpu values
         "str r1, [r0];" // write enables to CPACR
-        "ldr r0, =%[curfputask];" // get current fpu task
-        "ldr r1, [r0];"
-        "cbz r1, 1f;" // if its NULL, skip
         "ldr r2, =%[curtask];" // get current task
         "ldr r2, [r2];"
+        "ldr r0, =%[curfputask];" // get current fpu task
+        "ldr r1, [r0];"
         "cmp r1, r2;" // if current task is the current fpu task
         "beq 1f;" // skip
-        "str r2, [r0];" // otherwise write current task to current fpu task
+        "str r2, [r0];" // write current task to current fpu task
+        "cbz r1, 1f;" // if current fpu task was NULL, skip
         "adds r1, %[fpuregs];" // advance pointer to previous fpu task registers
         "vstmia r1!, {s0-s31};" // save all float registers to previous fpu task
         "vmrs r0, FPSCR;" // get FPCSR into r0
