@@ -85,10 +85,6 @@ public:
                 (*this)(r, c) = *i++;
     }
 
-    Matrix(const Matrix &mat) {
-        asm("bad Copy constructor");
-    }
-
     template <typename Expr>
     Matrix(const MatrixExpr<Expr> &expr) {
         *this = expr;
