@@ -14,6 +14,59 @@ public:
 };
 
 template <typename T, int M, int N>
+class Matrix;
+
+template <typename T, int M>
+class IdentityMatrix : public MatrixExpr<IdentityMatrix<T, M>> {
+public:
+    static constexpr int Rows = M;
+    static constexpr int Cols = M;
+    using Element = T;
+
+    IdentityMatrix() { }
+
+    Element operator()(int r, int c) const __attribute__((always_inline)) { return (r == c) ? 1 : 0; }
+
+    using Reduced = IdentityMatrix<T, M>;
+    using ReducedStorage = Reduced;
+    Reduced reduced() const { return *this; }
+};
+
+template <typename T, int M, int N, int SM, int SN>
+class MatrixSlice : public MatrixExpr<MatrixSlice<T, M, N, SM, SN>> {
+    Matrix<T, M, N> &mat;
+    int offset_row;
+    int offset_col;
+public:
+    static constexpr int Rows = SM;
+    static constexpr int Cols = SN;
+    using Element = T;
+
+    MatrixSlice(Matrix<T, M, N> &mat, int offset_row, int offset_col) :
+        mat(mat), offset_row(offset_row), offset_col(offset_col) { }
+
+    Element &operator()(int r, int c) __attribute__((always_inline)) { return mat(r+offset_row,c+offset_col); }
+    Element operator()(int r, int c) const __attribute__((always_inline)) { return mat(r+offset_row,c+offset_col); }
+    Element operator[](int i) const __attribute__((always_inline)) { return mat[i+offset_row]; }
+
+    template <typename Expr>
+        MatrixSlice<T, M, N, SM, SN> &operator=(const MatrixExpr<Expr> &expr) {
+        static_assert(Expr::Rows == Rows && Expr::Cols == Cols, "Dimensions mismatch");
+
+        const Expr &derived = expr.derived();
+        for (int r=0; r<Rows; r++)
+            for (int c=0; c<Cols; c++)
+                (*this)(r, c) = derived(r, c);
+        return *this;
+    }
+
+    using Reduced = MatrixSlice<T, M, N, SM, SN>;
+    using ReducedStorage = const Reduced &;
+    const Reduced &reduced() const { return *this; }
+
+};
+
+template <typename T, int M, int N>
 class Matrix : public MatrixExpr<Matrix<T, M, N>> {
     T data[M*N];
 
@@ -25,10 +78,10 @@ public:
     Matrix() { }
 
     Matrix(std::initializer_list<T> l) {
-        T *pos = data;
-        for (auto i = l.begin(); i != l.end(); ++i) {
-            *pos++ = *i;
-        }
+        auto i = l.begin();
+        for (int r=0; r<Rows; r++)
+            for (int c=0; c<Cols; c++)
+                (*this)(r, c) = *i++;
     }
 
     Matrix(const Matrix &mat) {
@@ -45,14 +98,18 @@ public:
 
     Element &operator()(int r, int c) __attribute__((always_inline)) { return data[r+c*M]; }
     Element operator()(int r, int c) const __attribute__((always_inline)) { return data[r+c*M]; }
+    Element operator[](int i) const __attribute__((always_inline)) { static_assert(Cols == 1, "index access only valid on Vectors!"); return data[i]; }
+
+    template <int SM, int SN>
+    MatrixSlice<T, M, N, SM, SN> slice(int row, int col) { return MatrixSlice<T, M, N, SM, SN>(*this, row, col); }
 
     template <typename Expr>
     Matrix<T, M, N> &operator=(const MatrixExpr<Expr> &expr) {
         static_assert(Expr::Rows == Rows && Expr::Cols == Cols, "Dimensions mismatch");
 
         const Expr &derived = expr.derived();
-        for (int r=0; r<M; r++)
-            for (int c=0; c<N; c++)
+        for (int r=0; r<Rows; r++)
+            for (int c=0; c<Cols; c++)
                 (*this)(r, c) = derived(r, c);
         return *this;
     }
@@ -61,6 +118,9 @@ public:
     using ReducedStorage = const Reduced &;
     const Reduced &reduced() const { return *this; }
 };
+
+template <typename T, int N>
+using Vector = Matrix<T, N, 1>;
 
 template <typename OP, typename LHS, typename RHS>
 class BinaryMatrixOp : public MatrixExpr<BinaryMatrixOp<OP, LHS, RHS>> {
@@ -152,6 +212,38 @@ public:
     Reduced reduced() const { return *this; }
 };
 
+template <typename LHS, typename RHS>
+class VectorCrossOp : public MatrixExpr<VectorCrossOp<LHS, RHS>> {
+    typename LHS::ReducedStorage lhs_reduced;
+    typename RHS::ReducedStorage rhs_reduced;
+
+    static_assert(LHS::Rows == 3 && RHS::Rows == 3 && LHS::Cols == 1 && RHS::Cols == 1, "InvAlid dimensions for cross product");
+
+public:
+    static constexpr int Rows = 3;
+    static constexpr int Cols = 1;
+    using Element = decltype(lhs_reduced.derived()(0, 0) * rhs_reduced.derived()(0, 0));
+
+    VectorCrossOp(const LHS &lhs, const RHS &rhs) : lhs_reduced(lhs.reduced()), rhs_reduced(rhs.reduced()) { }
+
+    Element operator()(int r, int c) const {
+        switch (r) {
+        case 0:
+            return lhs_reduced(1,0)*rhs_reduced(2,0) - lhs_reduced(2,0)*rhs_reduced(1,0);
+        case 1:
+            return lhs_reduced(2,0)*rhs_reduced(0,0) - lhs_reduced(0,0)*rhs_reduced(2,0);
+        case 2:
+            return lhs_reduced(0,0)*rhs_reduced(1,0) - lhs_reduced(1,0)*rhs_reduced(0,0);
+        default:
+            return 0;
+        }
+    }
+
+    using Reduced = Matrix<Element, 3, 1>;
+    using ReducedStorage = Reduced;
+    Reduced reduced() const { return *this; }
+};
+
 template <typename Expr>
 class TransposeMatrixOp : public MatrixExpr<TransposeMatrixOp<Expr>> {
     const Expr &expr;
@@ -218,5 +310,15 @@ auto operator/(const MatrixExpr<Expr> &expr, Scalar scalar) ->
 template <typename Expr>
 auto tr(const MatrixExpr<Expr> &expr) ->
     TransposeMatrixOp<Expr> { return { expr.derived() }; }
+
+template <typename LHS, typename RHS>
+auto dot(const MatrixExpr<LHS> &lhs, const MatrixExpr<RHS> &rhs) ->
+    typename MatrixMultiplyOp<TransposeMatrixOp<LHS>, RHS>::Element {
+    return MatrixMultiplyOp<TransposeMatrixOp<LHS>, RHS>({ lhs.derived() }, rhs.derived())(0, 0);
+}
+
+template <typename LHS, typename RHS>
+auto cross(const MatrixExpr<LHS> &lhs, const MatrixExpr<RHS> &rhs) ->
+    VectorCrossOp<LHS, RHS> { return { lhs.derived(), rhs.derived() }; }
 
 #endif
