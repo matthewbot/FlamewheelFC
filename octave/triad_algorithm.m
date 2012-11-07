@@ -1,10 +1,8 @@
 # NOAA: 24,137.66 nT -2,318.67 nT 40,396.99 nT
 
-function A=triad_algorithm(accel, mag)
-  accel_fixed = [0; 0; 9.8];
-  mag_fixed = [-2.3186e+03; 2.4138e+04; -4.0397e+04];
-  mag_fixed(1:2) *= -1;
-  mag(1:2) *= -1;
+function [A, fixed]=triad_algorithm(accel, mag)
+  accel_fixed = [0; 0; -9.8];
+  mag_fixed = [2.4138e+04; -2.3186e+03; 4.0397e+04];
 
   fixed = zeros(3);
   fixed(:, 1) = accel_fixed/norm(accel_fixed);

@@ -2,9 +2,9 @@
 #include <math.h>
 
 MatrixF<3, 3> triad_algorithm(const VectorF<3> &accel, const VectorF<3> &mag) {
-    MatrixF<3, 3> fixed = { 0, -0.99542, 0.09562,
-                            0, -0.09562, -0.99542,
-                            1, 0, 0 };
+    MatrixF<3, 3> fixed = { 0, -0.09562, -0.99542,
+                            0, -0.99542, 0.09562,
+                            -1, 0, 0 };
 
     MatrixF<3, 3> measured;
     measured.slice<3, 1>(0, 0) = (1/norm(accel))*accel;
