@@ -35,9 +35,10 @@ function [x_up, P_up, z] = ekf_ind(x, P, y_g, y_a, y_m, q_ins, g_e, m_e, R_g, R_
   R = [R_a, zeros(3),
        zeros(3), R_m];
   z = [y_a - g_b;
-       y_m - m_b];
+       y_m/norm(y_m) - m_b];
 
-  K = P_pred*H'/(H*P_pred*H' + R);
+  ch = chol(H*P_pred*H' + R)';
+  K = (ch'\(ch\(H*P_pred')))';
   x_up = x_pred + K*(z - H*x_pred);
   P_up = (eye(9)-K*H)*P_pred;
 
