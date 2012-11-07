@@ -10,6 +10,7 @@ void ins_start();
 void ins_stop();
 
 Quaternion ins_get_quaternion();
+VectorF<3> ins_get_rate();
 VectorF<3> ins_get_bias();
 
 void ins_correct(const Quaternion &quat_err, const VectorF<3> &bias_err);

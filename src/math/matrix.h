@@ -125,8 +125,8 @@ public:
     ConstMatrixSlice(const Matrix<T, M, N> &mat, int offset_row, int offset_col) :
         mat(mat), offset_row(offset_row), offset_col(offset_col) { }
 
-    Element operator()(int r, int c) const { static_assert(SM == 1, "Index access only valid on vector slice"); return mat(r+offset_row,c+offset_col); }
-    Element operator[](int i) const { static_assert(SM == 1, "Index access only valid on vector slice"); return mat(i+offset_row, offset_col); }
+    Element operator()(int r, int c) const { static_assert(SN == 1, "Index access only valid on vector slice"); return mat(r+offset_row,c+offset_col); }
+    Element operator[](int i) const { static_assert(SN == 1, "Index access only valid on vector slice"); return mat(i+offset_row, offset_col); }
 
     template <int SM2, int SN2>
     ConstMatrixSlice<T, M, N, SM2, SN2> slice(int row, int col) const { return ConstMatrixSlice<T, M, N, SM2, SN2>(mat, offset_row+row, offset_col+col); }
@@ -247,9 +247,9 @@ using VectorF = Vector<float, N>;
 
 template <typename OP, typename LHS, typename RHS>
 class BinaryMatrixOp : public MatrixExpr<BinaryMatrixOp<OP, LHS, RHS>> {
-    const OP &op;
-    const LHS &lhs;
-    const RHS &rhs;
+    const OP op;
+    const LHS lhs;
+    const RHS rhs;
 
 public:
     static_assert(LHS::Rows == RHS::Rows && LHS::Cols == RHS::Cols, "Dimensions mismatch");
@@ -269,8 +269,8 @@ public:
 
 template <typename OP, typename Expr, typename Scalar>
 class ScalarMatrixOp : public MatrixExpr<ScalarMatrixOp<OP, Expr, Scalar>> {
-    const OP &op;
-    const Expr &expr;
+    const OP op;
+    const Expr expr;
     Scalar scalar;
 
 public:
@@ -289,7 +289,7 @@ public:
 
 template <typename Expr>
 class NegateMatrixOp : public MatrixExpr<NegateMatrixOp<Expr>> {
-    const Expr &expr;
+    const Expr expr;
 
 public:
     static constexpr int Rows = Expr::Rows;
@@ -390,7 +390,7 @@ class TransposeReducedExprOp;
 
 template <typename Expr>
 class TransposeMatrixOp : public MatrixExpr<TransposeMatrixOp<Expr>> {
-    const Expr &expr;
+    const Expr expr;
 
 public:
     static constexpr int Rows = Expr::Cols;

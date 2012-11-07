@@ -3,16 +3,18 @@
 
 #include "matrix.h"
 
+using Quaternion = VectorF<4>;
+
 static constexpr float pi = 3.1415926535;
-
-MatrixF<3, 3> triad_algorithm(const VectorF<3> &accel, const VectorF<3> &mag);
-
 inline constexpr float deg_to_rad(float deg) { return deg * (pi / static_cast<float>(180)); }
 inline constexpr float rad_to_deg(float rad) { return rad * (static_cast<float>(180) / pi); }
-VectorF<3> rotation_to_rpy(const MatrixF<3, 3> &rot);
 
-using Quaternion = VectorF<4>;
+MatrixF<3, 3> triad_algorithm(const VectorF<3> &accel, const VectorF<3> &mag);
+VectorF<3> rot_to_rpy(const MatrixF<3, 3> &rot);
+Quaternion rot_to_quat(const MatrixF<3, 3> &rot);
+
 Quaternion quat_mult(const Quaternion &a, const Quaternion &b);
+void quat_norm(Quaternion &a);
 Quaternion quat_conj(const Quaternion &q);
 Quaternion quat_int(const Quaternion &q, const VectorF<3> &w, float dt);
 Quaternion quat_axisangle(const VectorF<3> &axis, float angle);

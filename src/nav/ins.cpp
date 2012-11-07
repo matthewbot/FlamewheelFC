@@ -6,6 +6,7 @@
 
 // state
 static Quaternion quat;
+static VectorF<3> rate;
 static VectorF<3> bias;
 static bool running;
 static Mutex mutex;
@@ -18,7 +19,7 @@ DECLARE_TASK_FUNC(ins_func);
 
 void ins_init() {
     quat = {1, 0, 0, 0};
-    ins_task.setup("ins", Task::HIGH, ins_func, nullptr, ins_stack, sizeof(ins_stack));
+    ins_task.setup("ins", Task::HIGH-0x10, ins_func, nullptr, ins_stack, sizeof(ins_stack));
     KernelCriticalSection crit;
     sched_add_task(ins_task);
 }
@@ -32,7 +33,6 @@ void ins_start() {
 void ins_stop() {
     Lock lock(mutex);
     running = false;
-    signal.notify_all();
 }
 
 Quaternion ins_get_quaternion() {
@@ -40,6 +40,15 @@ Quaternion ins_get_quaternion() {
     {
         Lock lock(mutex);
         ret = quat;
+    }
+    return ret;
+}
+
+VectorF<3> ins_get_rate() {
+    VectorF<3> ret;
+    {
+        Lock lock(mutex);
+        ret = rate;
     }
     return ret;
 }
@@ -67,24 +76,21 @@ void ins_reset(const Quaternion &new_quat, const VectorF<3> &new_bias) {
 
 void ins_func(void *unused) {
     while (true) {
-        Quaternion q;
         VectorF<3> b;
         {
             Lock lock(mutex);
             while (!running)
                 signal.wait(lock);
-            q = quat;
             b = bias;
         }
 
         MPUSample sample = mpu_sample();
-        VectorF<3> w = calibration_gyro(sample.gyro);
-        Quaternion qprime = quat_int(q, w-b, 1e-3);
-        qprime = static_cast<float>(1.0/norm(qprime))*qprime;
+        VectorF<3> newrate = calibration_gyro(sample.gyro)-b;
+        Quaternion newquat = quat_int(quat, newrate, 1e-3);
+        quat_norm(newquat);
 
-        {
-            Lock lock(mutex);
-            quat = qprime;
-        }
+        Lock lock(mutex);
+        rate = newrate;
+        quat = newquat;
     }
 }

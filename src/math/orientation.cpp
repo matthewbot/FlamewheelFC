@@ -2,29 +2,37 @@
 #include <math.h>
 
 MatrixF<3, 3> triad_algorithm(const VectorF<3> &accel, const VectorF<3> &mag) {
-    MatrixF<3, 3> fixed = { 0, 0, -1,
-                            0, 1, 0,
+    MatrixF<3, 3> fixed = { 0, -0.99542, 0.09562,
+                            0, -0.09562, -0.99542,
                             1, 0, 0 };
 
-    VectorF<3> accel_norm = (1/norm(accel))*accel;
-    VectorF<3> mag_norm = (1/norm(mag))*mag;
-
     MatrixF<3, 3> measured;
-    measured.slice<3, 1>(0, 0) = accel_norm;
+    measured.slice<3, 1>(0, 0) = (1/norm(accel))*accel;
 
-    VectorF<3> cr = cross(accel_norm, mag_norm);
+    VectorF<3> cr = cross(accel, mag);
     measured.slice<3, 1>(0, 1) = (1/norm(cr))*cr;
     cr = cross(measured.slice<3, 1>(0, 0), measured.slice<3, 1>(0, 1));
-    measured.slice<3, 1>(0, 2) = (1/norm(cr))*cr;
+    measured.slice<3, 1>(0, 2) = cr;
 
-    MatrixF<3, 3> rot = fixed*tr(measured);
+    MatrixF<3, 3> rot = measured*tr(fixed);
     return rot;
 }
 
-VectorF<3> rotation_to_rpy(const MatrixF<3, 3> &rot) {
-    return { atan2f(rot(2, 1), rot(2, 2)),
-            atan2f(-rot(2, 0), sqrtf(rot(2, 1)*rot(2, 1) + rot(2, 2)*rot(2, 2))),
-            atan2f(rot(1, 0), rot(0, 0)) };
+VectorF<3> rot_to_rpy(const MatrixF<3, 3> &rot) {
+    VectorF<3> ret;
+    ret[0] = atan2f(rot(2,1), rot(2,2));
+    ret[1] = -asinf(rot(2,0));
+    ret[2] = atan2f(rot(1,0), rot(0, 0));
+    return ret;
+}
+
+Quaternion rot_to_quat(const MatrixF<3, 3> &rot) {
+    Quaternion q;
+    q[0] = sqrtf(1 + rot(0, 0) + rot(1, 1) + rot(2, 2))/2;
+    q[1] = copysignf(sqrtf(1 + rot(0, 0) - rot(1, 1) - rot(2, 2))/2, rot(2, 1) - rot(1, 2));
+    q[2] = copysignf(sqrtf(1 - rot(0, 0) + rot(1, 1) - rot(2, 2))/2, rot(0, 2) - rot(2, 0));
+    q[3] = copysignf(sqrtf(1 - rot(0, 0) - rot(1, 1) + rot(2, 2))/2, rot(1, 0) - rot(0, 1));
+    return q;
 }
 
 Quaternion quat_mult(const Quaternion &a, const Quaternion &b) {
@@ -34,6 +42,10 @@ Quaternion quat_mult(const Quaternion &a, const Quaternion &b) {
         a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1],
         a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0]
     };
+}
+
+void quat_norm(Quaternion &a) {
+    a = (1/norm(a))*a;
 }
 
 Quaternion quat_conj(const Quaternion &q) {
@@ -59,9 +71,11 @@ Quaternion quat_axisangle(const VectorF<3> &axis, float angle) {
 }
 
 VectorF<3> quat_to_rpy(const Quaternion &q) {
-    return {atan2f(2*q[1]*q[0]-2*q[1]*q[3], 1 - 2*q[1]*q[1] - 2*q[3]*q[3]),
-            atan2f(2*q[2]*q[0] - 2*q[1]*q[3], 1 - 2*q[2]*q[2] - 2*q[3]*q[3]),
-            asinf(2*q[1]*q[2]+2*q[3]*q[0]) };
+    return {
+        atan2f(2*(q[1]*q[2] + q[0]*q[3]), q[0]*q[0]+q[1]*q[1]-q[2]*q[2]-q[3]*q[3]),
+        atan2f(2*(q[2]*q[3] + q[0]*q[1]), q[0]*q[0]-q[1]*q[1]-q[2]*q[2]+q[3]*q[3]),
+        asinf(-2*(q[1]*q[3] - q[0]*q[2])) };
+
 }
 
 MatrixF<3, 3> C_mat(const Quaternion &q) {
