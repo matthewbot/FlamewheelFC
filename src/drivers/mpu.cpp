@@ -125,6 +125,25 @@ MPUSample mpu_sample() {
     return sample;
 }
 
+MPUSample mpu_sample_averaged(int samples) {
+    int32_t accel_accum[3] = { 0, 0, 0 };
+    int32_t gyro_accum[3] = { 0, 0, 0 };
+    for (int s=0; s<samples; s++) {
+        signal.wait();
+        for (int i=0; i<3; i++) {
+            accel_accum[i] += sample.accel[i];
+            gyro_accum[i] += sample.gyro[i];
+        }
+    }
+
+    MPUSample ret = sample;
+    for (int i=0; i<3; i++) {
+        sample.accel[i] = accel_accum[i] / samples;
+        sample.gyro[i] = gyro_accum[i] / samples;
+    }
+    return ret;
+}
+
 // interrupt when MPU assert INT
 extern "C" void irq_ext4() {
     ss(true);

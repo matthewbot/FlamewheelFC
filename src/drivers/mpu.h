@@ -18,5 +18,6 @@ struct MPUSample {
 };
 
 MPUSample mpu_sample();
+MPUSample mpu_sample_averaged(int samples);
 
 #endif

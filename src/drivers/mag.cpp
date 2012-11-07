@@ -4,10 +4,11 @@
 #include "stm32f4xx_exts.h"
 
 // state
-MagSample sample;
+static MagSample sample;
 enum class State { RECEIVING, SENDING };
-State state;
+static State state;
 static uint8_t read_buf[6];
+static Signal signal;
 
 // DMA constants
 static constexpr int rx_stream_num = 2;
@@ -77,7 +78,7 @@ void mag_init() {
     start(addr_write);
     write(REG_CONFIGA);
     write(0); // config a
-    write(0x02); // config b
+    write(0x40); // config b
     stop();
 
     // enable EXTI
@@ -97,7 +98,22 @@ void mag_init() {
 }
 
 MagSample mag_sample() {
+    signal.wait();
     return sample;
+}
+
+MagSample mag_sample_averaged(int samples) {
+    int32_t field_accum[3] = { 0, 0, 0 };
+    for (int s=0; s<samples; s++) {
+        signal.wait();
+        for (int i=0; i<3; i++)
+            field_accum[i] += sample.field[i];
+    }
+
+    MagSample ret = sample;
+    for (int i=0; i<3; i++)
+        ret.field[i] = field_accum[i] / samples;
+    return ret;
 }
 
 // called when DRDY pin goes high
@@ -115,8 +131,9 @@ extern "C" void irq_dma1_stream2() {
     sample.field[0] = pos[0] << 8 | pos[1]; pos += 2;
     sample.field[2] = pos[0] << 8 | pos[1]; pos += 2; // sensor goes X, Z, Y according to documentation
     sample.field[1] = pos[0] << 8 | pos[1];
-    DMA1->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2;
+    signal.notify_all();
 
+    DMA1->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2;
     i2c->CR1 &= ~I2C_CR1_ACK;
     i2c->CR2 &= ~I2C_CR2_LAST;
     state = State::SENDING;

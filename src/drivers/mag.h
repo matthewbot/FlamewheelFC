@@ -11,5 +11,6 @@ struct MagSample {
 };
 
 MagSample mag_sample();
+MagSample mag_sample_averaged(int samples);
 
 #endif
