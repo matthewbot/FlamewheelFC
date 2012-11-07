@@ -19,7 +19,7 @@ int main() {
     mag_init();
     mpu_init();
 
-/*    ins_init();
+    ins_init();
     attitude_init();
 
     ins_start();
@@ -31,7 +31,7 @@ int main() {
         uart << rad_to_deg(rpy[0]) << "\t" << rad_to_deg(rpy[1]) << "\t" << rad_to_deg(rpy[2]) << endl;
 
         sched_sleep(100);
-        } //*/
+    } //*/
 /*
     int16_t max[3] = {0, 0, 0};
     int16_t min[3] = {0, 0, 0};
@@ -60,7 +60,7 @@ int main() {
         uart << endl;
         } */
 //*/
-    while (true) {
+/*    while (true) {
         MPUSample mpu = mpu_sample();
         MagSample mag = mag_sample();
 
@@ -80,6 +80,7 @@ int main() {
 
         uart << endl;
         }
+*/
 /*
     int sums[3] = { 0, 0, 0};
     for (int i=0; i<1024; i++) {

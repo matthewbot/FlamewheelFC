@@ -1,7 +1,7 @@
 #include "attitude_ekf.h"
 
-static const float g_e[] = { 0, 0, 9.8 };
-static const float m_e[] = { .512299, -0.049209, .857396 };
+static const float g_e[] = { 0, 0, -9.8 };
+static const float m_e[] = { .512308, -0.049210, .857396 };
 static const float R_g[] = { 3e-5, 3e-5, 3e-6 };
 static const float R_a[] = { 1e-4, 1e-4, 1e-4 };
 static const float R_m[] = { 1e-2, 1e-2, 1e-2 };
@@ -21,7 +21,7 @@ EKFState attitude_ekf(const EKFState &state,
     Q.slice<3, 3>(6, 6) = diag(ConstMatrix<float, 3, 1>(Q_b_a));
 
     MatrixF<9, 9> A_d = IdentityMatrix<float, 9>() + dt*A;
-    auto Q_d = dt*Q + (0.5f*dt*dt)*(A*Q + Q*tr(A));
+    MatrixF<9, 9> Q_d = dt*Q + (0.5f*dt*dt)*(A*Q + Q*tr(A));
 
     EKFState newstate;
     newstate.x = A_d*state.x;

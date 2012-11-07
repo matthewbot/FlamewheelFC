@@ -76,7 +76,7 @@ class DiagMatrixReduced;
 template <typename Expr>
 class DiagMatrix : public MatrixExpr<DiagMatrix<Expr>> {
     static_assert(Expr::Cols == 1, "DiagMatrix must be created from a vector");
-    const Expr &expr;
+    const Expr expr;
 
 public:
     static constexpr int Rows = Expr::Rows;

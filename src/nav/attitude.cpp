@@ -16,7 +16,7 @@ static Mutex mutex;
 static Signal signal;
 
 // constants
-static const float ekf_P_init[] = { 1e-1, 1e-1, 1e-1, 1e-4, 1e-4, 1e-3, 1e-3, 1e-3 };
+static const float ekf_P_init[] = { 1e-1, 1e-1, 1e-1, 1e-4, 1e-4, 1e-4, 1e-3, 1e-3, 1e-3 };
 
 // task
 static Task attitude_task;
