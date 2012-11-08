@@ -120,8 +120,9 @@ void mpu_reset(AccelFS new_accel_fs, GyroFS new_gyro_fs, uint8_t new_dlpf, uint8
     writereg(REG_INT_ENABLE, (1 << 0)); // turn on DATA_RDY_EN
 }
 
-MPUSample mpu_sample() {
-    signal.wait();
+MPUSample mpu_sample(bool block) {
+    if (block)
+        signal.wait();
     return sample;
 }
 

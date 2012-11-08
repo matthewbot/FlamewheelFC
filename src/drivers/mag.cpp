@@ -97,8 +97,9 @@ void mag_init() {
     i2c->CR1 |= I2C_CR1_START;
 }
 
-MagSample mag_sample() {
-    signal.wait();
+MagSample mag_sample(bool block) {
+    if (block)
+        signal.wait();
     return sample;
 }
 

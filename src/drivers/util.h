@@ -43,7 +43,7 @@ inline void util_delay(int cycles) {
 }
 
 template <typename T, size_t N>
-    class RingBuffer {
+class RingBuffer {
 public:
     void reset() {
         readpos = writepos = cnt = 0;

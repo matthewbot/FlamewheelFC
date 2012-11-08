@@ -1,4 +1,4 @@
-g_e = single([0; 0; 9.8]);
+g_e = single([0; 0; -9.8]);
 m_e = single([.512299; -0.049209; .857396]);
 R_g = single(diag([3e-5, 3e-5, 3e-6]));
 R_a = single(diag([1e-4, 1e-4, 1e-4]));

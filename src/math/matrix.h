@@ -76,7 +76,7 @@ class DiagMatrixReduced;
 template <typename Expr>
 class DiagMatrix : public MatrixExpr<DiagMatrix<Expr>> {
     static_assert(Expr::Cols == 1, "DiagMatrix must be created from a vector");
-    const Expr expr;
+    const Expr &expr;
 
 public:
     static constexpr int Rows = Expr::Rows;
@@ -248,8 +248,8 @@ using VectorF = Vector<float, N>;
 template <typename OP, typename LHS, typename RHS>
 class BinaryMatrixOp : public MatrixExpr<BinaryMatrixOp<OP, LHS, RHS>> {
     const OP op;
-    const LHS lhs;
-    const RHS rhs;
+    const LHS &lhs;
+    const RHS &rhs;
 
 public:
     static_assert(LHS::Rows == RHS::Rows && LHS::Cols == RHS::Cols, "Dimensions mismatch");
@@ -270,7 +270,7 @@ public:
 template <typename OP, typename Expr, typename Scalar>
 class ScalarMatrixOp : public MatrixExpr<ScalarMatrixOp<OP, Expr, Scalar>> {
     const OP op;
-    const Expr expr;
+    const Expr &expr;
     Scalar scalar;
 
 public:
@@ -289,7 +289,7 @@ public:
 
 template <typename Expr>
 class NegateMatrixOp : public MatrixExpr<NegateMatrixOp<Expr>> {
-    const Expr expr;
+    const Expr &expr;
 
 public:
     static constexpr int Rows = Expr::Rows;
@@ -390,7 +390,7 @@ class TransposeReducedExprOp;
 
 template <typename Expr>
 class TransposeMatrixOp : public MatrixExpr<TransposeMatrixOp<Expr>> {
-    const Expr expr;
+    const Expr &expr;
 
 public:
     static constexpr int Rows = Expr::Cols;

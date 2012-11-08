@@ -8,7 +8,7 @@ static Task idle_task;
 DECLARE_TASK_STACK(idle_stack, 64);
 DECLARE_TASK_FUNC(idle_func);
 static Task main_task;
-DECLARE_TASK_STACK(main_stack, 4*1024);
+DECLARE_TASK_STACK(main_stack, 16*1024);
 DECLARE_TASK_FUNC(main_func);
 
 void kmain() {

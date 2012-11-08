@@ -17,7 +17,7 @@ struct MPUSample {
     int16_t gyro[3];
 };
 
-MPUSample mpu_sample();
+MPUSample mpu_sample(bool block=true);
 MPUSample mpu_sample_averaged(int samples);
 
 #endif

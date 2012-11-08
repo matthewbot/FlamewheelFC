@@ -10,6 +10,23 @@
 #include "nav/attitude.h"
 #include "math/orientation.h"
 
+#include "math/attitude_ekf.h"
+
+#include "drivers/uart.h"
+#include "kernel/sched.h"
+
+template <typename T>
+void dumpmat(const T &mat, float scale) {
+    for (int r=0; r<mat.rows(); r++) {
+        for (int c=0; c<mat.cols(); c++) {
+            uart << mat(r, c)*scale << "\t";
+        }
+        uart << endl;
+        sched_sleep(1);
+    }
+    uart << endl;
+}
+
 int main() {
     uart_init();
     rgbled_init();
@@ -28,10 +45,15 @@ int main() {
     while (true) {
         AttitudeState state = attitude_get_state();
         VectorF<3> rpy = quat_to_rpy(state.quat);
-        uart << rad_to_deg(rpy[0]) << "\t" << rad_to_deg(rpy[1]) << "\t" << rad_to_deg(rpy[2]) << endl;
+        //VectorF<3> rpy = quat_to_rpy(ins_get_quaternion());
+        uart << rad_to_deg(rpy[0]) << "\t" << rad_to_deg(rpy[1]) << "\t" << rad_to_deg(rpy[2]) << "\t";
 
+        VectorF<3> bias = ins_get_bias();
+        uart << bias[0]*100 << "\t" << bias[1]*1000 << "\t" << bias[2]*1000;
+
+        uart << endl;
         sched_sleep(100);
-    } //*/
+        }//*/
 /*
     int16_t max[3] = {0, 0, 0};
     int16_t min[3] = {0, 0, 0};
@@ -50,15 +72,22 @@ int main() {
 //*/
 
 /*    while (true) {
-        MagSample mag = mag_sample_averaged(10);
-        VectorF<3> vec = calibration_mag(mag.field);
-        VectorF<3> vec = { mag.field[0], mag.field[1], mag.field[2] };
-        uart << norm(vec) << "\t";
+        MagSample magsample = mag_sample_averaged(10);
+        MPUSample mpusample = mpu_sample_averaged(10);
+        VectorF<3> mag = calibration_mag(magsample.field);
+        VectorF<3> accel = calibration_accel(mpusample.accel);
+        VectorF<3> gyro = calibration_gyro(mpusample.gyro);
         for (int i=0; i<3; i++) {
-            uart << vec[i] << "\t";
+            uart << mag[i] << "\t";
+        }
+        for (int i=0; i<3; i++) {
+            uart << accel[i] << "\t";
+        }
+        for (int i=0; i<3; i++) {
+            uart << gyro[i]*1e3 << "\t";
         }
         uart << endl;
-        } */
+    }
 //*/
 /*    while (true) {
         MPUSample mpu = mpu_sample();
@@ -79,20 +108,34 @@ int main() {
             uart << static_cast<int>(cal[i]) << "\t";
 
         uart << endl;
-        }
-*/
-/*
-    int sums[3] = { 0, 0, 0};
-    for (int i=0; i<1024; i++) {
-        MPUSample mpu = mpu_sample();
-        for (int i=0; i<3; i++)
-            sums[i] += mpu.gyro[i];
     }
+*/
 
-    for (int i=0; i<3; i++)
-        sums[i] /= 1024;
-    int16_t sample[3] = { (int16_t)sums[0], (int16_t)sums[1], (int16_t)sums[2] };
-    VectorF<3> bias = calibration_gyro(sample);
+/*    while (true) {
+        MPUSample mpusample = mpu_sample();
+        MagSample magsample = mag_sample(false);
+
+        VectorF<3> accel = calibration_accel(mpusample.accel);
+        VectorF<3> gyro = calibration_gyro(mpusample.gyro);
+        VectorF<3> mag = calibration_mag(magsample.field);
+
+
+        for (int i=0; i<3; i++)
+            uart << static_cast<int>(accel[i]*1000) << "\t";
+
+        for (int i=0; i<3; i++)
+            uart << static_cast<int>(gyro[i]*1000) << "\t";
+
+        for (int i=0; i<3; i++)
+            uart << static_cast<int>(mag[i]) << "\t";
+
+        uart << endl;
+    }
+//*/
+
+/*    ins_init();
+    MPUSample sample = mpu_sample_averaged(1000);
+    VectorF<3> bias = calibration_gyro(sample.gyro);
     ins_reset({1, 0, 0, 0}, bias);
     ins_start();
 
@@ -101,8 +144,24 @@ int main() {
         Quaternion quat = ins_get_quaternion();
         VectorF<3> rpy = quat_to_rpy(quat);
         for (int i=0; i<3; i++)
-            uart << (int)(rad_to_deg(rpy[i])*10) << "\t";
+            uart << (int)(rad_to_deg(rpy[i])) << "\t";
         uart << endl;
+        }//*/
+
+/*    EKFState state;
+    state.x = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    for (int r=0; r<9; r++) {
+        for (int c=0; c<9; c++)
+            state.P(r, c) = (r==c) ? 10 : 1;
     }
-*/
+
+    VectorF<3> y_g = { 1, 1, 1 };
+    VectorF<3> y_a = { 2, 2, 2 };
+    VectorF<3> y_m = { 3, 3, 3 };
+    Quaternion q_ins = { 1, 0, 0, 0 };
+
+    EKFState newstate = attitude_ekf(state, y_g, y_a, y_m, q_ins, true, true, .01);
+
+    while (true) { }//*/
+
 }

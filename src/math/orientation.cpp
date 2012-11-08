@@ -14,7 +14,8 @@ MatrixF<3, 3> triad_algorithm(const VectorF<3> &accel, const VectorF<3> &mag) {
     cr = cross(measured.slice<3, 1>(0, 0), measured.slice<3, 1>(0, 1));
     measured.slice<3, 1>(0, 2) = cr;
 
-    MatrixF<3, 3> rot = measured*tr(fixed);
+//    MatrixF<3, 3> rot = measured*tr(fixed);
+    MatrixF<3, 3> rot = fixed*tr(measured);
     return rot;
 }
 
@@ -38,7 +39,7 @@ Quaternion rot_to_quat(const MatrixF<3, 3> &rot) {
 Quaternion quat_mult(const Quaternion &a, const Quaternion &b) {
     return {
         a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3],
-        a[0]*b[1] - a[1]*b[0] + a[2]*b[3] - a[3]*b[2],
+        a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2],
         a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1],
         a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0]
     };
@@ -72,10 +73,9 @@ Quaternion quat_axisangle(const VectorF<3> &axis, float angle) {
 
 VectorF<3> quat_to_rpy(const Quaternion &q) {
     return {
-        atan2f(2*(q[1]*q[2] + q[0]*q[3]), q[0]*q[0]+q[1]*q[1]-q[2]*q[2]-q[3]*q[3]),
-        atan2f(2*(q[2]*q[3] + q[0]*q[1]), q[0]*q[0]-q[1]*q[1]-q[2]*q[2]+q[3]*q[3]),
-        asinf(-2*(q[1]*q[3] - q[0]*q[2])) };
-
+        atan2f(2*q[1]*q[0] - 2*q[1]*q[3], 1 - 2*q[1]*q[1] - 2*q[3]*q[3]),
+        atan2f(2*q[2]*q[0] - 2*q[1]*q[3], 1 - 2*q[2]*q[2] - 2*q[3]*q[3]),
+        asinf(2*q[1]*q[2] + 2*q[3]*q[0]) };
 }
 
 MatrixF<3, 3> C_mat(const Quaternion &q) {

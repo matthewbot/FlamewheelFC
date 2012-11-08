@@ -61,12 +61,9 @@ AttitudeState attitude_get_state() {
     AttitudeState state;
 
     Lock lock(mutex);
-    Quaternion quat_err;
-    quat_err[0] = 1;
-    quat_err.slice<3, 1>(1, 0) = ekf_state.x.slice<3, 1>(0, 0);
-    state.quat = quat_mult(quat_err, ins_get_quaternion());
+    state.quat = quat_mult(ins_get_quaternion(), ekf_state.err_quat());
     quat_norm(state.quat);
-    state.rate = ins_get_rate() - ekf_state.x.slice<3, 1>(3, 0);
+    state.rate = ins_get_rate() - ekf_state.err_gyro_bias();
     return state;
 }
 
@@ -79,21 +76,18 @@ void attitude_func(void *unused) {
         }
 
         int start = sched_now();
-        MPUSample mpu = mpu_sample();
-        MagSample mag = mag_sample();
+        MPUSample mpu = mpu_sample(true);
+        MagSample mag = mag_sample(true);
         Quaternion ins = ins_get_quaternion();
-        EKFState new_state = attitude_ekf(ekf_state, calibration_gyro(mpu.gyro), calibration_accel(mpu.accel), calibration_mag(mag.field), ins, true, true, .01);
+        VectorF<3> rate = ins_get_rate();
+        EKFState new_state = attitude_ekf(ekf_state, rate, calibration_accel(mpu.accel), calibration_mag(mag.field), ins, true, true, .01);
 
         {
             Lock lock(mutex);
             ekf_state = new_state;
             if (++reset_ctr >= 100) {
-                Quaternion quat_err;
-                quat_err[0] = 1;
-                quat_err.slice<3, 1>(1, 0) = ekf_state.x.slice<3, 1>(0, 0);
-                VectorF<3> bias_err = ekf_state.x.slice<3, 1>(3, 0);
+                ins_correct(ekf_state.err_quat(), ekf_state.err_gyro_bias());
                 ekf_state.x.slice<6, 1>(0, 0) = ZeroMatrix<float, 6, 1>();
-                ins_correct(quat_err, bias_err);
                 reset_ctr = 0;
             }
         }

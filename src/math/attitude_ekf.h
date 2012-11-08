@@ -7,6 +7,10 @@
 struct EKFState {
     VectorF<9> x;
     MatrixF<9, 9> P;
+
+    Quaternion err_quat() const;
+    VectorF<3> err_gyro_bias() const { return x.slice<3, 1>(3, 0); }
+    VectorF<3> accel_bias() const { return x.slice<3, 1>(6, 0); }
 };
 
 EKFState attitude_ekf(const EKFState &state,

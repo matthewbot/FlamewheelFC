@@ -10,7 +10,7 @@ struct MagSample {
     int16_t field[3];
 };
 
-MagSample mag_sample();
+MagSample mag_sample(bool block=true);
 MagSample mag_sample_averaged(int samples);
 
 #endif
