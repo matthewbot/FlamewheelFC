@@ -10,27 +10,10 @@ static const float Q_b_g[] = { 1e-8, 1e-8, 1e-8 };
 
 Quaternion EKFState::err_quat() const {
     Quaternion q;
-    q[0] = sqrt(1 - x[0]*x[0]+x[1]*x[1]+x[2]*x[2]);
+    q[0] = sqrtf(1 - x[0]*x[0]+x[1]*x[1]+x[2]*x[2]);
     q.slice<3,1>(1,0) = x.slice<3, 1>(0, 0);
     return q;
 }
-
-#include "drivers/uart.h"
-#include "kernel/sched.h"
-
-template <typename T>
-void dumpmat(const T &mat, float scale) {
-    for (int r=0; r<mat.rows(); r++) {
-        for (int c=0; c<mat.cols(); c++) {
-            uart << mat(r, c)*scale << "\t";
-        }
-        uart << endl;
-        sched_sleep(1);
-    }
-    uart << endl;
-}
-
-static int dbgctr=0;
 
 EKFState attitude_ekf(const EKFState &state,
                   const VectorF<3> &y_g, const VectorF<3> &y_a, const VectorF<3> &y_m,
@@ -87,18 +70,6 @@ EKFState attitude_ekf(const EKFState &state,
     for (int r=0; r<9; r++)
         for (int c=0; c<r; c++)
             newstate.P(c, r) = newstate.P(r, c);
-
-/*    if (++dbgctr > 10) {
-        uart << "Z: ";
-        dumpmat(tr(z), 1e3);
-        dbgctr = 0;
-        }*/
-
-/*    if (++dbgctr > 10) {
-        uart << "X: " << endl;
-        dumpmat(tr(newstate.x), 1e3);
-        dbgctr = 0;
-        }*/
 
     return newstate;
 }

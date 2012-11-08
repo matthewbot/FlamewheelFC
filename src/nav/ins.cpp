@@ -9,6 +9,7 @@ static Quaternion quat;
 static VectorF<3> rate;
 static VectorF<3> bias;
 static bool running;
+static bool skip;
 static Mutex mutex;
 static Signal signal;
 
@@ -62,21 +63,19 @@ VectorF<3> ins_get_bias() {
     return ret;
 }
 
-#include "drivers/uart.h"
-
 void ins_correct(const Quaternion &quat_err, const VectorF<3> &bias_err) {
-    uart << "ins_correct" << endl;
-
     Lock lock(mutex);
     quat = quat_mult(quat, quat_err);
     quat_norm(quat);
     bias = bias + bias_err;
+    skip = true;
 }
 
 void ins_reset(const Quaternion &new_quat, const VectorF<3> &new_bias) {
     Lock lock(mutex);
     quat = new_quat;
     bias = new_bias;
+    skip = true;
 }
 
 void ins_func(void *unused) {
@@ -89,9 +88,15 @@ void ins_func(void *unused) {
 
         MPUSample sample = mpu_sample();
 
+        VectorF<3> newrate = calibration_gyro(sample.gyro)-bias;
+        Quaternion newquat = quat_int(quat, rate, 1e-3);
+        quat_norm(newquat);
+
         Lock lock(mutex);
-        rate = calibration_gyro(sample.gyro)-bias;
-        quat = quat_int(quat, rate, 1e-3);
-        quat_norm(quat);
+        if (running && !skip) {
+            rate = newrate;
+            quat = newquat;
+        }
+        skip = false;
     }
 }

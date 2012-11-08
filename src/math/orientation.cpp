@@ -14,7 +14,6 @@ MatrixF<3, 3> triad_algorithm(const VectorF<3> &accel, const VectorF<3> &mag) {
     cr = cross(measured.slice<3, 1>(0, 0), measured.slice<3, 1>(0, 1));
     measured.slice<3, 1>(0, 2) = cr;
 
-//    MatrixF<3, 3> rot = measured*tr(fixed);
     MatrixF<3, 3> rot = fixed*tr(measured);
     return rot;
 }
@@ -62,7 +61,7 @@ Quaternion quat_int(const Quaternion &q, const VectorF<3> &w, float dt) {
 }
 
 Quaternion quat_axisangle(const VectorF<3> &axis, float angle) {
-    if (fabsf(angle) < 1e-8)
+    if (fabsf(angle) < 1e-8f)
         return { 1, 0, 0, 0 };
 
     Quaternion ret;

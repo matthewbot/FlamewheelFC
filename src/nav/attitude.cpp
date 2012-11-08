@@ -12,6 +12,7 @@
 static EKFState ekf_state;
 static int reset_ctr;
 static bool running;
+static bool skip;
 static Mutex mutex;
 static Signal signal;
 
@@ -43,6 +44,7 @@ void attitude_start_from_triad() {
     ekf_state.P = diag(ConstMatrix<float, 9, 1>(ekf_P_init));
     reset_ctr = 0;
     running = true;
+    skip = true;
     signal.notify_all();
 }
 
@@ -67,6 +69,18 @@ AttitudeState attitude_get_state() {
     return state;
 }
 
+AttitudeDebugState attitude_get_debug_state() {
+    AttitudeDebugState state;
+
+    Lock lock(mutex);
+    state.quat = quat_mult(ins_get_quaternion(), ekf_state.err_quat());
+    quat_norm(state.quat);
+    state.rate = ins_get_rate() - ekf_state.err_gyro_bias();
+    state.bias_gyro = ins_get_bias() + ekf_state.err_gyro_bias();
+    state.bias_accel = ekf_state.accel_bias();
+    return state;
+}
+
 void attitude_func(void *unused) {
     while (true) {
         {
@@ -84,12 +98,15 @@ void attitude_func(void *unused) {
 
         {
             Lock lock(mutex);
-            ekf_state = new_state;
-            if (++reset_ctr >= 100) {
-                ins_correct(ekf_state.err_quat(), ekf_state.err_gyro_bias());
-                ekf_state.x.slice<6, 1>(0, 0) = ZeroMatrix<float, 6, 1>();
-                reset_ctr = 0;
+            if (running && !skip) {
+                ekf_state = new_state;
+                if (++reset_ctr >= 100) {
+                    ins_correct(ekf_state.err_quat(), ekf_state.err_gyro_bias());
+                    ekf_state.x.slice<6, 1>(0, 0) = ZeroMatrix<float, 6, 1>();
+                    reset_ctr = 0;
+                }
             }
+            skip = false;
         }
 
         sched_sleep(10 - (sched_now() - start));

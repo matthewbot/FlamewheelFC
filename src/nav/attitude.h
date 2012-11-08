@@ -20,8 +20,8 @@ AttitudeState attitude_get_state();
 struct AttitudeDebugState {
     Quaternion quat;
     VectorF<3> rate;
-    VectorF<3> b_g;
-    VectorF<3> b_a;
+    VectorF<3> bias_gyro;
+    VectorF<3> bias_accel;
     bool acc_en;
 };
 

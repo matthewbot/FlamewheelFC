@@ -269,7 +269,7 @@ public:
 
 template <typename OP, typename Expr, typename Scalar>
 class ScalarMatrixOp : public MatrixExpr<ScalarMatrixOp<OP, Expr, Scalar>> {
-    const OP op;
+    const OP &op;
     const Expr &expr;
     Scalar scalar;
 
@@ -337,16 +337,7 @@ public:
 
     MatrixMultiplyOp(const LHS &lhs, const RHS &rhs) : lhs_reduced(lhs.reduced()), rhs_reduced(rhs.reduced()) { }
 
-#ifndef NDEBUG
-    Element operator()(int r, int c) const {
-        Element accum=0;
-        for (int i=0; i < LHS::Derived::Cols; i++)
-            accum += lhs_reduced(r, i)*rhs_reduced(i, c);
-        return accum;
-    }
-#else
     Element operator()(int r, int c) const { return recdot<LHS::Derived::Cols-1, typename LHS::Reduced, typename RHS::Reduced>::eval(r, c, lhs_reduced, rhs_reduced); }
-#endif
 
     using Reduced = Matrix<Element, Rows, Cols>;
     using ReducedStorage = Reduced;
