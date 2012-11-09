@@ -17,7 +17,7 @@ static Mutex mutex;
 static Signal signal;
 
 // constants
-static const float ekf_P_init[] = { 1e-1, 1e-1, 1e-1, 1e-4, 1e-4, 1e-4, 1e-3, 1e-3, 1e-3 };
+static const float ekf_P_init[] = { 1e2, 1e2, 1e2, 1e-2, 1e-2, 1e-2, 1e-3, 1e-3, 1e-3 };
 
 // task
 static Task attitude_task;
@@ -25,38 +25,42 @@ DECLARE_TASK_STACK(attitude_stack, 16*1024);
 DECLARE_TASK_FUNC(attitude_func);
 
 void attitude_init() {
+    attitude_reset();
+
     attitude_task.setup("attitude", Task::HIGH, attitude_func, nullptr, attitude_stack, sizeof(attitude_stack));
     KernelCriticalSection crit;
     sched_add_task(attitude_task);
 }
 
-void attitude_start_from_triad() {
-    MPUSample sample = mpu_sample_averaged(500);
-    MagSample magsample = mag_sample_averaged(100);
-    VectorF<3> accel = calibration_accel(sample.accel);
-    VectorF<3> mag = calibration_mag(magsample.field);
-    VectorF<3> gyro = calibration_gyro(sample.gyro);
-    Quaternion quat = rot_to_quat(triad_algorithm(accel, mag));
-
-    Lock lock(mutex);
-    ins_reset(quat, gyro);
-    ekf_state.x = ZeroMatrix<float, 9, 1>();
-    ekf_state.P = diag(ConstMatrix<float, 9, 1>(ekf_P_init));
-    reset_ctr = 0;
-    running = true;
-    skip = true;
-    signal.notify_all();
+void attitude_start_triad() {
+    attitude_stop();
+    ins_start_triad();
+    attitude_reset();
+    attitude_start();
 }
 
 void attitude_start() {
+    ins_start();
     Lock lock(mutex);
     running = true;
     signal.notify_all();
 }
 
 void attitude_stop() {
-    Lock lock(mutex);
+    ins_stop();
     running = false;
+}
+
+void attitude_reset() {
+    Lock lock(mutex);
+    ekf_state.x = ZeroMatrix<float, 9, 1>();
+    ekf_state.P = diag(ConstMatrix<float, 9, 1>(ekf_P_init));
+    reset_ctr = 0;
+    skip = true;
+}
+
+bool attitude_running() {
+    return running;
 }
 
 AttitudeState attitude_get_state() {

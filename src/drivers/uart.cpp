@@ -85,6 +85,10 @@ void uart_gets(char *buf, size_t cnt) {
     *buf = '\0';
 }
 
+size_t uart_avail() {
+    return rxbuf.count();
+}
+
 extern "C" void irq_usart1() {
     uint32_t sr = usart->SR;
     usart->SR = 0;

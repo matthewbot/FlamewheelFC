@@ -19,7 +19,7 @@ DECLARE_TASK_STACK(ins_stack, 4*1024);
 DECLARE_TASK_FUNC(ins_func);
 
 void ins_init() {
-    quat = {1, 0, 0, 0};
+    ins_reset();
     ins_task.setup("ins", Task::HIGH-0x10, ins_func, nullptr, ins_stack, sizeof(ins_stack));
     KernelCriticalSection crit;
     sched_add_task(ins_task);
@@ -31,9 +31,22 @@ void ins_start() {
     signal.notify_all();
 }
 
+void ins_start_triad() {
+    MPUSample sample = mpu_sample_averaged(500);
+    MagSample magsample = mag_sample_averaged(100);
+    VectorF<3> accel = calibration_accel(sample.accel);
+    VectorF<3> mag = calibration_mag(magsample.field);
+    VectorF<3> gyro = calibration_gyro(sample.gyro);
+    Quaternion quat = rot_to_quat(triad_algorithm(accel, mag));
+    ins_reset(quat, gyro);
+}
+
 void ins_stop() {
-    Lock lock(mutex);
     running = false;
+}
+
+bool ins_running() {
+    return running;
 }
 
 Quaternion ins_get_quaternion() {
@@ -69,6 +82,13 @@ void ins_correct(const Quaternion &quat_err, const VectorF<3> &bias_err) {
     quat_norm(quat);
     bias = bias + bias_err;
     skip = true;
+}
+
+void ins_reset() {
+   Lock lock(mutex);
+   quat = {1, 0, 0, 0};
+   bias = {0, 0, 0};
+   skip = true;
 }
 
 void ins_reset(const Quaternion &new_quat, const VectorF<3> &new_bias) {

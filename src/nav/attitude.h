@@ -6,9 +6,11 @@
 
 void attitude_init();
 
-void attitude_start_from_triad();
+void attitude_start_triad();
 void attitude_start();
 void attitude_stop();
+void attitude_reset();
+bool attitude_running();
 
 struct AttitudeState {
     Quaternion quat;
