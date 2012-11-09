@@ -20,7 +20,15 @@ int main() {
     rgbled_init();
     rgbled_set(0x40FF40, 100);
 
-    sched_sleep(1000);
+    while (true) {
+        char buf[128];
+        uart << "Enter something: ";
+        uart >> buf;
+        uart << "You said " << buf << endl;
+    }
+
+
+/*    sched_sleep(1000);
     mag_init();
     mpu_init();
 
@@ -39,5 +47,5 @@ int main() {
 
         uart << endl;
         sched_sleep(10);
-    }
+        } //*/
 }

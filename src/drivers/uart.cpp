@@ -3,6 +3,8 @@
 #include "drivers/stm32f4xx_exts.h"
 #include "math/int.h"
 #include "kernel/sched.h"
+#include "kernel/kernel.h"
+#include "kernel/sync.h"
 #include <stdlib.h>
 
 // pin constants
@@ -14,7 +16,9 @@ static constexpr int AF_USART1 = 7;
 static constexpr USART_TypeDef *usart = USART1;
 static constexpr uint32_t brr = UART_BRR(84e6, 1152000);
 
-static RingBuffer<uint8_t, 128> buf;
+static RingBuffer<uint8_t, 128> txbuf;
+static RingBuffer<uint8_t, 128> rxbuf;
+static Signal rxbuf_signal;
 
 void uart_init() {
     // enable clocks
@@ -24,38 +28,78 @@ void uart_init() {
 
     // set up USART
     usart->BRR = brr;
-    usart->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
-    util_enable_irq(USART1_IRQn, IRQ_PRI_LOW);
+    usart->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE;
+    util_enable_irq(USART1_IRQn, IRQ_PRI_KERNEL);
 
     // set up GPIOs
     GPIOA->AFR[1] |= AFRH(PIN_TX, AF_USART1) | AFRH(PIN_RX, AF_USART1);
     GPIOA->MODER |= MODER_AF(PIN_TX) | MODER_AF(PIN_RX);
 }
 
-void uart_puts(const char *out) {
-    IRQCriticalSection<USART1_IRQn> crit;
-    while (*out != '\0') {
-        if (buf.full())
-            kernel_halt("uart_puts buffer full");
-        buf.put(*out++);
-    }
+void uart_putch(char ch) {
+    KernelCriticalSection crit;
+    if (ch == '\n')
+        uart_putch('\r');
+    if (!txbuf.full())
+        txbuf.put(ch);
     usart->CR1 |= USART_CR1_TXEIE;
 }
 
+void uart_puts(const char *out) {
+    while (*out != '\0')
+        uart_putch(*out++);
+}
+
 void uart_putint(int i) {
-    char buf[16];
-    char *pos = itoan(i, buf, sizeof(buf));
+    char txbuf[16];
+    char *pos = itoan(i, txbuf, sizeof(txbuf));
     uart_puts(pos);
 }
 
-extern "C" void irq_usart1() {
-    if (buf.empty()) {
-        usart->CR1 &= ~USART_CR1_TXEIE;
-        return;
+char uart_getch() {
+    char ch;
+    while (true) {
+        KernelCriticalSection crit;
+        if (!rxbuf.empty()) {
+            ch = rxbuf.get();
+            break;
+        }
+        rxbuf_signal.wait();
     }
 
-    usart->DR = buf.get();
+    if (ch == '\r')
+        uart_putch('\n');
+    else
+        uart_putch(ch);
+    return ch;
+}
 
-    if (buf.empty())
-        usart->CR1 &= ~USART_CR1_TXEIE;
+void uart_gets(char *buf, size_t cnt) {
+    cnt--; // one character for the null
+    while (cnt--) {
+        char ch = uart_getch();
+        if (ch == '\r')
+            break;
+        *buf++ = ch;
+    }
+    *buf = '\0';
+}
+
+extern "C" void irq_usart1() {
+    uint32_t sr = usart->SR;
+    usart->SR = 0;
+
+    if (sr & USART_SR_TXE) {
+        if (!txbuf.empty())
+            usart->DR = txbuf.get();
+        else
+            usart->CR1 &= ~USART_CR1_TXEIE;
+    }
+    if (sr & USART_SR_RXNE) {
+        uint8_t byte = usart->DR;
+        if (!rxbuf.full()) {
+            rxbuf.put(byte);
+            rxbuf_signal.notify_all();
+        }
+    }
 }
