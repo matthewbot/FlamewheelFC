@@ -121,6 +121,7 @@ void mpu_reset(AccelFS new_accel_fs, GyroFS new_gyro_fs, uint8_t new_dlpf, uint8
 }
 
 MPUSample mpu_sample(bool block) {
+    KernelCriticalSection crit;
     if (block)
         signal.wait();
     return sample;

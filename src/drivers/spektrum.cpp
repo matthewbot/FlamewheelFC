@@ -71,12 +71,8 @@ SpektrumSample spektrum_sample(bool block) {
     if (block)
         signal.wait();
 
-    SpektrumSample ret;
-    {
-        KernelCriticalSection crit;
-        ret = sample;
-    }
-    return ret;
+    KernelCriticalSection crit;
+    return sample;
 }
 
 bool spektrum_valid() {
@@ -134,7 +130,6 @@ static void irq_tim5_bind() {
 
 extern "C" void irq_tim5() {
     tim->SR = 0;
-
     if (bindctr > 0)
         irq_tim5_bind();
     else

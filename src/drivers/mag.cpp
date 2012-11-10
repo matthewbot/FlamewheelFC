@@ -98,6 +98,7 @@ void mag_init() {
 }
 
 MagSample mag_sample(bool block) {
+    KernelCriticalSection crit;
     if (block)
         signal.wait();
     return sample;
