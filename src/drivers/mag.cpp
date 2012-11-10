@@ -9,6 +9,7 @@ enum class State { RECEIVING, SENDING };
 static State state;
 static uint8_t read_buf[6];
 static Signal signal;
+static bool initialized;
 
 // DMA constants
 static constexpr int rx_stream_num = 2;
@@ -46,10 +47,12 @@ void mag_init() {
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
     __DMB();
 
+    // configure I2C
     i2c->CR2 = 42;
     i2c->TRISE = 500;
     i2c->CCR = 210;
     i2c->CR1 = I2C_CR1_PE;
+    i2c->CR2 = I2C_CR2_ITERREN;
 
     // configure receive stream
     rx_stream->PAR = (uint32_t)&i2c->DR;
@@ -80,6 +83,8 @@ void mag_init() {
     write(0); // config a
     write(0x40); // config b
     stop();
+
+    initialized = true;
 
     // enable EXTI
     SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI12_PB;
@@ -167,7 +172,24 @@ extern "C" void irq_i2c2_ev() {
 }
 
 extern "C" void irq_i2c2_er() {
-    kernel_halt("i2c error");
+    if (!initialized)
+        kernel_halt("I2C Error before initialization");
+
+    uint32_t sr = i2c->SR1;
+    if (sr & (I2C_SR1_BERR | I2C_SR1_AF)) {
+        i2c->SR1 &= ~(I2C_SR1_BERR | I2C_SR1_AF);
+        rx_stream->CR &= ~DMA_SxCR_EN;
+        tx_stream->CR &= ~DMA_SxCR_EN;
+        DMA1->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2;
+        i2c->CR1 &= ~I2C_CR1_ACK;
+        i2c->CR2 &= ~I2C_CR2_LAST;
+        if (i2c->SR2 & I2C_SR2_MSL) {
+            i2c->CR1 |= I2C_CR1_STOP;
+            while (i2c->CR1 & I2C_CR1_STOP) { }
+        }
+        i2c->CR1 |= I2C_CR1_START;
+        state = State::RECEIVING;
+    }
 }
 
 static void start(uint8_t addr) {
