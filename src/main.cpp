@@ -5,6 +5,7 @@
 #include "drivers/rgbled.h"
 #include "drivers/mag.h"
 #include "drivers/mpu.h"
+#include "drivers/spektrum.h"
 #include <stdint.h>
 #include <stm32f4xx.h>
 
@@ -12,6 +13,7 @@ int main() {
     uart_init();
     rgbled_init();
     rgbled_set(0x40FF40, 100);
+    spektrum_init();
     mag_init();
     mpu_init();
     ins_init();

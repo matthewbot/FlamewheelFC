@@ -8,5 +8,6 @@ void controlpanel_sensors_cal();
 void controlpanel_triad();
 void controlpanel_ins();
 void controlpanel_attitude();
+void controlpanel_spektrum();
 
 #endif

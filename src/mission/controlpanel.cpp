@@ -6,6 +6,7 @@
 #include "drivers/uart.h"
 #include "drivers/mag.h"
 #include "drivers/mpu.h"
+#include "drivers/spektrum.h"
 #include "kernel/sched.h"
 #include <string.h>
 
@@ -54,6 +55,11 @@ void controlpanel_run() {
             uart << "Attitude started from triad" << endl;
         } else if (strcmp(buf, "attitude") == 0) {
             controlpanel_attitude();
+        } else if (strcmp(buf, "spektrum bind") == 0) {
+            spektrum_bind();
+            uart << "Entered bind mode" << endl;
+        } else if (strcmp(buf, "spektrum") == 0) {
+            controlpanel_spektrum();
         } else if (buf[0] != '\0') {
             uart << "unknown command '" << buf << '\'' << endl;
         }
@@ -135,6 +141,31 @@ void controlpanel_attitude() {
         dump_vec(state.bias_accel, 1000);
         uart << endl;
         sched_sleep(1);
+    }
+
+    uart_getch();
+    uart << endl;
+}
+
+void controlpanel_spektrum() {
+    bool valid=true;
+    while (!uart_avail()) {
+        if (!spektrum_valid()) {
+            if (valid) {
+                valid = false;
+                uart << "Lost signal" << endl;
+            }
+        } else {
+            valid = true;
+            SpektrumSample sample = spektrum_sample(false);
+
+            uart << "N " << sample.headernum << '\t';
+            for (int i=0; i<8; i++)
+                uart << sample.channel[i] << '\t';
+            uart << endl;
+        }
+
+        sched_sleep(50);
     }
 
     uart_getch();

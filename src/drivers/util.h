@@ -13,6 +13,11 @@ constexpr uint32_t AFRH(int pin, int af) { return af << (4*(pin-8)); }
 constexpr uint32_t MODER_OUT(int pin) { return 1 << (2*pin); }
 constexpr uint32_t MODER_AF(int pin) { return 2 << (2*pin); }
 constexpr uint32_t MODER_AN(int pin) { return 3 << (2*pin); }
+constexpr uint32_t MODER_MASK(int pin) { return 3 << (2*pin); }
+
+constexpr uint32_t PUPDR_UP(int pin) { return 1 << (2*pin); }
+constexpr uint32_t PUPDR_DOWN(int pin) { return 2 << (2*pin); }
+constexpr uint32_t PUPDR_MASK(int pin) { return 3 << (2*pin); }
 
 // GPIO utilities
 constexpr uint32_t UART_BRR(int clk, int baud) { return (float)clk / baud + 0.5f; }
