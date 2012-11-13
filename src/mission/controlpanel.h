@@ -9,5 +9,6 @@ void controlpanel_triad();
 void controlpanel_ins();
 void controlpanel_attitude();
 void controlpanel_spektrum();
+void controlpanel_esctest();
 
 #endif

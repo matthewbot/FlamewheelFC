@@ -7,6 +7,7 @@
 #include "drivers/mag.h"
 #include "drivers/mpu.h"
 #include "drivers/spektrum.h"
+#include "drivers/esc.h"
 #include "kernel/sched.h"
 #include <string.h>
 
@@ -60,6 +61,8 @@ void controlpanel_run() {
             uart << "Entered bind mode" << endl;
         } else if (strcmp(buf, "spektrum") == 0) {
             controlpanel_spektrum();
+        } else if (strcmp(buf, "esc test") == 0) {
+            controlpanel_esctest();
         } else if (buf[0] != '\0') {
             uart << "unknown command '" << buf << '\'' << endl;
         }
@@ -168,6 +171,66 @@ void controlpanel_spektrum() {
         sched_sleep(50);
     }
 
+    uart_getch();
+    uart << endl;
+}
+
+void controlpanel_esctest() {
+    int escnum = -1;
+    bool selectmsg = false;
+
+    while (!uart_avail() && spektrum_valid()) {
+        SpektrumSample speksample = spektrum_sample(false);
+        int roll = speksample.channel[1];
+        int pitch = speksample.channel[2];
+        int throttle = speksample.channel[0];
+        int yaw = speksample.channel[3];
+
+        if (escnum == -1) {
+            if (!selectmsg) {
+                uart << "Select an ESC with the right stick" << endl;
+                selectmsg = true;
+            }
+            if (roll > 800) {
+                if (pitch > 800) {
+                    escnum = (int)ESC::FRONT_LEFT;
+                } else if (pitch < 200) {
+                    escnum = (int)ESC::REAR_LEFT;
+                }
+            } else if (roll < 200) {
+                if (pitch > 800) {
+                    escnum = (int)ESC::FRONT_RIGHT;
+                } else if (pitch < 200) {
+                    escnum = (int)ESC::REAR_RIGHT;
+                }
+            }
+
+            if (escnum != -1) {
+                uart << "ESC " << escnum << " selected" << endl;
+                sched_sleep(1000);
+                selectmsg = false;
+            }
+        } else {
+            if (yaw < 200 || yaw > 800) {
+                uart << "ESC " << escnum << " disarmed" << endl;
+
+                esc_off(escnum);
+                escnum = -1;
+            } else {
+                int pwm = static_cast<int>((throttle-200.0f)/630.0f * 1500);
+                if (pwm < 0)
+                    pwm = 0;
+                else if (pwm > 1500)
+                    pwm = 1500;
+                uart << "PWM " << pwm << endl;
+                esc_set(escnum, pwm);
+            }
+        }
+
+        sched_sleep(20);
+    }
+
+    esc_all_off();
     uart_getch();
     uart << endl;
 }
