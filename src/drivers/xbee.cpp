@@ -19,7 +19,7 @@ static constexpr DMA_Stream_TypeDef *rx_stream = DMA1_Stream5;
 
 // UART constants
 static constexpr USART_TypeDef *usart = USART2;
-static constexpr uint32_t brr = UART_BRR(42e6, 115200);
+static constexpr uint32_t brr = UART_BRR(42e6, 19200);
 
 // XBee constants
 static constexpr int API_TX_16 = 0x01;
@@ -79,7 +79,7 @@ void xbee_init() {
     tx_stream->M0AR = (uint32_t)tx_buf;
     tx_stream->CR = (4 << DMA_SxCR_CHSEL_Pos) | DMA_SxCR_MINC | DMA_SxCR_DIR_MEM2PER;
 
-    // configure USAR
+    // configure USART
     usart->BRR = brr;
     usart->CR3 = USART_CR3_CTSE | USART_CR3_RTSE | USART_CR3_DMAT;
     usart->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE;
@@ -124,10 +124,14 @@ XBeeSendResponse xbee_send(uint16_t addr, const char *data, size_t data_len) {
         *end++ = data[i];
     uint16_t packet_len = end_packet(begin, end);
 
-    sendresp_received = false;
-    send_packet(packet_len);
-    while (!sendresp_received)
-        rx_signal.wait();
+    while (true) {
+        sendresp_received = false;
+        send_packet(packet_len);
+
+        sched_sleep(100);
+        if (sendresp_received)
+            break;
+    }
 
     return sendresp;
 }
@@ -203,30 +207,34 @@ static void receive_packet() {
 }
 
 extern "C" void irq_usart2() {
-    uint8_t byte = usart->DR;
+    uint32_t sr = usart->SR;
+    usart->SR = 0;
+    if (sr & USART_SR_RXNE) {
+        uint8_t byte = usart->DR;
 
-    switch (rx_state) {
-    case RXState::START:
-        if (byte == 0x7E)
-            rx_state = RXState::LEN_H;
-        break;
+        switch (rx_state) {
+        case RXState::START:
+            if (byte == 0x7E)
+                rx_state = RXState::LEN_H;
+            break;
 
-    case RXState::LEN_H:
-        rx_len = byte << 8;
-        rx_state = RXState::LEN_L;
-        break;
+        case RXState::LEN_H:
+            rx_len = byte << 8;
+            rx_state = RXState::LEN_L;
+            break;
 
-    case RXState::LEN_L:
-        rx_len |= byte;
-        rx_len += 1; // include checksum
-        rx_state = RXState::START;
+        case RXState::LEN_L:
+            rx_len |= byte;
+            rx_len += 1; // include checksum
+            rx_state = RXState::START;
 
-        usart->CR1 &= ~USART_CR1_RXNEIE;
-        usart->CR3 |= USART_CR3_DMAR;
+            usart->CR1 &= ~USART_CR1_RXNEIE;
+            usart->CR3 |= USART_CR3_DMAR;
 
-        rx_stream->NDTR = rx_len;
-        rx_stream->CR |= DMA_SxCR_EN;
-        break;
+            rx_stream->NDTR = rx_len;
+            rx_stream->CR |= DMA_SxCR_EN;
+            break;
+        }
     }
 }
 
