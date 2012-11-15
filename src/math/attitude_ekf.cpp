@@ -2,8 +2,8 @@
 
 static const float g_e[] = { 0, 0, -9.8 };
 static const float m_e[] = { .512308, -0.049210, .857396 };
-static const float R_g[] = { 1e-4, 1e-4, 1e-5 };
-static const float R_a[] = { 1e-3, 1e-3, 1e-3 };
+static const float R_g[] = { 1e-2, 1e-2, 1e-3 };
+static const float R_a[] = { 1e-2, 1e-2, 1e-2 };
 static const float R_m[] = { 1e-2, 1e-2, 1e-2 };
 static const float Q_b_a[] = { 1e-12, 1e-12, 1e-12 };
 static const float Q_b_g[] = { 1e-12, 1e-12, 1e-12 };

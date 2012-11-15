@@ -20,6 +20,8 @@ void dump_mat(const MatT &t, int scale);
 template <typename VecT>
 void dump_vec(const VecT &t, int scale);
 
+static uint16_t throttle_to_pwm(uint16_t throttle);
+
 void controlpanel_run() {
     while (true) {
         uart << "FC> ";
@@ -65,6 +67,10 @@ void controlpanel_run() {
             controlpanel_spektrum();
         } else if (strcmp(buf, "esc test") == 0) {
             controlpanel_esctest();
+        } else if (strcmp(buf, "esc sensors") == 0) {
+            controlpanel_esc_sensors();
+        } else if (strcmp(buf, "esc inscomp") == 0) {
+            controlpanel_esc_inscomp();
         } else if (strcmp(buf, "controller") == 0) {
             controlpanel_controller();
         } else if (strcmp(buf, "controller test") == 0) {
@@ -226,17 +232,61 @@ void controlpanel_esctest() {
                 esc_off(escnum);
                 escnum = -1;
             } else {
-                int pwm = static_cast<int>((throttle-200.0f)/630.0f * 1500);
-                if (pwm < 0)
-                    pwm = 0;
-                else if (pwm > 1500)
-                    pwm = 1500;
+                int pwm = throttle_to_pwm(throttle);
                 uart << "PWM " << pwm << endl;
                 esc_set(escnum, pwm);
             }
         }
 
         sched_sleep(20);
+    }
+
+    esc_all_off();
+    uart_getch();
+    uart << endl;
+}
+
+void controlpanel_esc_sensors() {
+    while (!uart_avail() && spektrum_valid()) {
+        MPUSample mpusample = mpu_sample();
+        MagSample magsample = mag_sample(false);
+
+        for (int i=0; i<3; i++)
+            uart << mpusample.gyro[i] << '\t';
+        for (int i=0; i<3; i++)
+            uart << mpusample.accel[i] << '\t';
+        for (int i=0; i<3; i++)
+            uart << magsample.field[i] << '\t';
+
+        SpektrumSample speksample = spektrum_sample(false);
+        uint16_t pwm = throttle_to_pwm(speksample.channel[0]);
+        for (int i=0; i<4; i++)
+            esc_set(i, pwm);
+
+        uart << pwm << endl;
+    }
+
+    esc_all_off();
+    uart_getch();
+    uart << endl;
+}
+
+void controlpanel_esc_inscomp() {
+    while (!uart_avail() && spektrum_valid()) {
+        INSCompDebugState state = inscomp_get_debug_state();
+
+        dump_rpy(quat_to_rpy(state.quat));
+        dump_vec(state.bias_gyro, 1000);
+        dump_vec(state.bias_accel, 1000);
+        uart << state.acc_norm_err*1e6f << '\t';
+
+        SpektrumSample speksample = spektrum_sample(false);
+        int pwm = throttle_to_pwm(speksample.channel[0]);
+        for (int i=0; i<4; i++)
+            esc_set(i, pwm);
+
+        uart << pwm << endl;
+        sched_sleep(10);
     }
 
     esc_all_off();
@@ -292,3 +342,11 @@ void dump_vec(const VecT &t, int scale) {
     }
 }
 
+static uint16_t throttle_to_pwm(uint16_t throttle) {
+    int pwm = static_cast<int>((throttle-200.0f)/630.0f * 1500);
+    if (pwm < 0)
+        pwm = 0;
+    else if (pwm > 1500)
+        pwm = 1500;
+    return pwm;
+}
