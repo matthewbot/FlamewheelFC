@@ -10,10 +10,12 @@
 #include "drivers/spektrum.h"
 #include "drivers/esc.h"
 #include "drivers/xbee.h"
+#include "drivers/board.h"
 #include <stdint.h>
 #include <stm32f4xx.h>
 
 int main() {
+    board_init();
     uart_init();
     esc_init();
     rgbled_init();

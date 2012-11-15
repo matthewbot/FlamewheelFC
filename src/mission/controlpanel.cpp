@@ -9,6 +9,7 @@
 #include "drivers/mpu.h"
 #include "drivers/spektrum.h"
 #include "drivers/esc.h"
+#include "drivers/board.h"
 #include "kernel/sched.h"
 #include <string.h>
 
@@ -68,6 +69,8 @@ void controlpanel_run() {
             controlpanel_controller();
         } else if (strcmp(buf, "controller test") == 0) {
             controlpanel_controller_test();
+        } else if (strcmp(buf, "bat") == 0) {
+            uart << board_get_voltage() * 1000 << " mV" << endl;
         } else if (buf[0] != '\0') {
             uart << "unknown command '" << buf << '\'' << endl;
         }
