@@ -92,6 +92,7 @@ static void body(Frame &frame) {
         printreg("HFSR ", SCB->HFSR);
         printreg("BFAR ", SCB->BFAR);
         printreg("MMFAR ", SCB->MMFAR);
+        printreg("FPSCR ", __get_FPSCR());
         printreg("IP ", frame.ip);
         printreg("R0 ", frame.r0);
         printreg("R1 ", frame.r1);

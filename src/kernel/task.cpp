@@ -43,6 +43,7 @@ void Task::setup(const char *name, uint8_t priority, TaskFunc func, void *funcda
     regs->xPSR = 0x01000000;
     regs->pc = (uint32_t)func;
     regs->r0 = (uint32_t)funcdata;
+    fpuregs.FPSCR = (1 << 25);
     this->priority = priority;
     strncpy(this->name, name, sizeof(this->name));
 }
