@@ -5,8 +5,8 @@ static const float m_e[] = { .512308, -0.049210, .857396 };
 static const float R_g[] = { 1e-4, 1e-4, 1e-5 };
 static const float R_a[] = { 1e-3, 1e-3, 1e-3 };
 static const float R_m[] = { 1e-2, 1e-2, 1e-2 };
-static const float Q_b_a[] = { 1e-10, 1e-10, 1e-10 };
-static const float Q_b_g[] = { 1e-8, 1e-8, 1e-8 };
+static const float Q_b_a[] = { 1e-12, 1e-12, 1e-12 };
+static const float Q_b_g[] = { 1e-12, 1e-12, 1e-12 };
 
 Quaternion EKFState::err_quat() const {
     Quaternion q;
