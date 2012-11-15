@@ -5,12 +5,11 @@
 #include "orientation.h"
 
 struct EKFState {
-    VectorF<9> x;
-    MatrixF<9, 9> P;
+    VectorF<6> x;
+    MatrixF<6, 6> P;
 
     Quaternion err_quat() const;
     VectorF<3> err_gyro_bias() const { return x.slice<3, 1>(3, 0); }
-    VectorF<3> err_accel_bias() const { return x.slice<3, 1>(6, 0); }
 };
 
 bool attitude_ekf(EKFState &state,

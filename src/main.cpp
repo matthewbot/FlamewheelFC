@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include <stm32f4xx.h>
 
+#include "kernel/sched.h"
+
 int main() {
     board_init();
     uart_init();

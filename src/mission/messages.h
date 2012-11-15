@@ -18,10 +18,6 @@ struct StatusMsg {
     int16_t roll_bias; // in radians/sec * 1e4
     int16_t pitch_bias;
     int16_t yaw_bias;
-
-    int16_t accel_x_bias; // in m/s^2 * 1e3
-    int16_t accel_y_bias; // in m/s^2 * 1e3
-    int16_t accel_z_bias; // in m/s^2 * 1e3
 } __attribute__((packed));
 
 #endif

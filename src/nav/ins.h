@@ -17,8 +17,8 @@ VectorF<3> ins_get_rate_bias();
 VectorF<3> ins_get_accel();
 VectorF<3> ins_get_accel_bias();
 
-void ins_correct(const Quaternion &quat_err, const VectorF<3> &rate_bias_err, const VectorF<3> &accel_bias_err);
+void ins_correct(const Quaternion &quat_err, const VectorF<3> &rate_bias_err);
 void ins_reset();
-void ins_reset(const Quaternion &new_quat, const VectorF<3> &new_rate_bias, const VectorF<3> &new_accel_bias);
+void ins_reset(const Quaternion &new_quat, const VectorF<3> &new_rate_bias);
 
 #endif
