@@ -142,6 +142,7 @@ void controlpanel_attitude() {
         dump_rpy(quat_to_rpy(state.quat));
         dump_vec(state.bias_gyro, 1000);
         dump_vec(state.bias_accel, 1000);
+        uart << state.acc_norm_err*1e6f;
         uart << endl;
         sched_sleep(1);
     }

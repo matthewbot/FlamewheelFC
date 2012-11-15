@@ -10,7 +10,9 @@
 
 // state
 static EKFState ekf_state;
+static float acc_norm_err;
 static int reset_ctr;
+static int iteration_ctr;
 static bool running;
 static bool skip;
 static Mutex mutex;
@@ -56,6 +58,7 @@ void attitude_reset() {
     ekf_state.x = ZeroMatrix<float, 9, 1>();
     ekf_state.P = diag(ConstMatrix<float, 9, 1>(ekf_P_init));
     reset_ctr = 0;
+    iteration_ctr = 0;
     skip = true;
 }
 
@@ -82,6 +85,7 @@ AttitudeDebugState attitude_get_debug_state() {
     state.rate = ins_get_rate() - ekf_state.err_gyro_bias();
     state.bias_gyro = ins_get_rate_bias() + ekf_state.err_gyro_bias();
     state.bias_accel = ins_get_accel_bias() + ekf_state.err_accel_bias();
+    state.acc_norm_err = acc_norm_err;
     return state;
 }
 
@@ -100,7 +104,15 @@ void attitude_func(void *unused) {
         Quaternion ins = ins_get_quaternion();
         VectorF<3> rate = ins_get_rate();
         VectorF<3> accel = ins_get_accel();
-        bool ok = attitude_ekf(new_state, rate, accel, calibration_mag(mag.field), ins, true, true, .01);
+
+        float new_acc_norm_err = norm(accel)-9.8f;
+        new_acc_norm_err *= new_acc_norm_err;
+
+        bool acc_en = true;
+        if (iteration_ctr > 500)
+            acc_en = new_acc_norm_err < 0.01f;
+
+        bool ok = attitude_ekf(new_state, rate, accel, calibration_mag(mag.field), ins, true, acc_en, .01);
 
         if (!ok)
             kernel_halt("attitude_ekf failed");
@@ -109,6 +121,8 @@ void attitude_func(void *unused) {
             Lock lock(mutex);
             if (running && !skip) {
                 ekf_state = new_state;
+                acc_norm_err = new_acc_norm_err;
+                iteration_ctr++;
                 if (++reset_ctr >= 100) {
                     ins_correct(ekf_state.err_quat(), ekf_state.err_gyro_bias(), ekf_state.err_accel_bias());
                     ekf_state.x = ZeroMatrix<float, 9, 1>();

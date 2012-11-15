@@ -24,7 +24,7 @@ struct AttitudeDebugState {
     VectorF<3> rate;
     VectorF<3> bias_gyro;
     VectorF<3> bias_accel;
-    bool acc_en;
+    float acc_norm_err;
 };
 
 AttitudeDebugState attitude_get_debug_state();
