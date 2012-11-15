@@ -70,6 +70,15 @@ Quaternion quat_axisangle(const VectorF<3> &axis, float angle) {
     return ret;
 }
 
+VectorF<3> quat_to_axisangle(const Quaternion &quat, float &angle) {
+    VectorF<3> axis = quat.slice<3, 1>(1, 0);
+    angle = 2*acosf(quat[0]);
+    float s = sqrtf(1-quat[0]*quat[0]);
+    if (s > 1e-5)
+        axis = (1/s)*axis;
+    return axis;
+}
+
 VectorF<3> quat_to_rpy(const Quaternion &q) {
     return {
         atan2f(2*q[1]*q[0] - 2*q[1]*q[3], 1 - 2*q[1]*q[1] - 2*q[3]*q[3]),

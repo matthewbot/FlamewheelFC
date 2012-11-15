@@ -9,5 +9,6 @@
 VectorF<3> calibration_accel(const int16_t (&sample)[3]);
 VectorF<3> calibration_gyro(const int16_t (&sample)[3]);
 VectorF<3> calibration_mag(const int16_t (&sample)[3]);
+void calibration_esc(const VectorF<4> &thrust, uint16_t (&pwms)[4]);
 
 #endif

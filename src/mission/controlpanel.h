@@ -10,5 +10,7 @@ void controlpanel_ins();
 void controlpanel_inscomp();
 void controlpanel_spektrum();
 void controlpanel_esctest();
+void controlpanel_controller();
+void controlpanel_controller_test();
 
 #endif

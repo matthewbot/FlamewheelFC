@@ -2,6 +2,7 @@
 #include "nav/calibration.h"
 #include "nav/ins.h"
 #include "nav/inscomp.h"
+#include "nav/controller.h"
 #include "math/orientation.h"
 #include "drivers/uart.h"
 #include "drivers/mag.h"
@@ -63,6 +64,10 @@ void controlpanel_run() {
             controlpanel_spektrum();
         } else if (strcmp(buf, "esc test") == 0) {
             controlpanel_esctest();
+        } else if (strcmp(buf, "controller") == 0) {
+            controlpanel_controller();
+        } else if (strcmp(buf, "controller test") == 0) {
+            controlpanel_controller_test();
         } else if (buf[0] != '\0') {
             uart << "unknown command '" << buf << '\'' << endl;
         }
@@ -234,6 +239,34 @@ void controlpanel_esctest() {
     esc_all_off();
     uart_getch();
     uart << endl;
+}
+
+void controlpanel_controller() {
+    controller_start();
+
+    while (!uart_avail()) {
+        ControllerDebug state = controller_get_debug();
+
+        dump_vec(state.pout, 1000);
+        dump_vec(state.dout, 1000);
+        dump_vec(state.motors, 1000);
+        uart << endl;
+        sched_sleep(2);
+    }
+
+    uart_getch();
+    uart << endl;
+}
+
+void controlpanel_controller_test() {
+    ControllerSetpoint set;
+    set.mode = ControllerMode::ATTITUDE;
+    set.rate_d = ZeroMatrix<float, 3, 1>();
+    set.att_d = Quaternion{ 1, 0, 0, 0 };
+    set.thrust_d = .5;
+    controller_set(set);
+
+    controlpanel_controller();
 }
 
 static void dump_rpy(const VectorF<3> &rpy) {

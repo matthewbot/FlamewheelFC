@@ -37,7 +37,12 @@ void esc_all_off() {
         esc_off(i);
 }
 
-void esc_set(int esc, int pwm) {
+void esc_set(int esc, uint16_t pwm) {
     __IO uint32_t &reg = *(&tim->CCR1 + esc);
     reg = 1000+pwm;
+}
+
+void esc_set_all(const uint16_t (&pwms)[4]) {
+    for (int i=0; i<4; i++)
+        esc_set(i, pwms[i]);
 }

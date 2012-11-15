@@ -20,3 +20,14 @@ VectorF<3> calibration_mag(const int16_t (&sample)[3]) {
         ret[i] = magscales[i]*static_cast<float>(sample[i] - magoffsets[i]);
     return ret;
 }
+
+void calibration_esc(const VectorF<4> &thrust, uint16_t (&pwms)[4]) {
+    for (int i=0; i<4; i++) {
+        if (thrust[i] > 1)
+            pwms[i] = 1000;
+        else if (thrust[i] < 1)
+            pwms[i] = 0;
+        else
+            pwms[i] = static_cast<uint16_t>(thrust[i]*1000);
+    }
+}
