@@ -4,22 +4,22 @@
 #include "math/matrix.h"
 #include "math/orientation.h"
 
-void attitude_init();
+void inscomp_init();
 
-void attitude_start_triad();
-void attitude_start();
-void attitude_stop();
-void attitude_reset();
-bool attitude_running();
+void inscomp_start_triad();
+void inscomp_start();
+void inscomp_stop();
+void inscomp_reset();
+bool inscomp_running();
 
-struct AttitudeState {
+struct INSCompState {
     Quaternion quat;
     VectorF<3> rate;
 };
 
-AttitudeState attitude_get_state();
+INSCompState inscomp_get_state();
 
-struct AttitudeDebugState {
+struct INSCompDebugState {
     Quaternion quat;
     VectorF<3> rate;
     VectorF<3> bias_gyro;
@@ -27,7 +27,7 @@ struct AttitudeDebugState {
     float acc_norm_err;
 };
 
-AttitudeDebugState attitude_get_debug_state();
+INSCompDebugState inscomp_get_debug_state();
 
 
 #endif

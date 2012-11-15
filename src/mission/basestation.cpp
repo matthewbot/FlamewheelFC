@@ -1,6 +1,6 @@
 #include "mission/basestation.h"
 #include "mission/messages.h"
-#include "nav/attitude.h"
+#include "nav/inscomp.h"
 #include "drivers/xbee.h"
 #include "kernel/sched.h"
 #include "kernel/kernel.h"
@@ -26,7 +26,7 @@ void basestation_init() {
 }
 
 static void send_status_message() {
-    AttitudeDebugState attstate = attitude_get_debug_state();
+    INSCompDebugState attstate = inscomp_get_debug_state();
     VectorF<3> rpy = quat_to_rpy(attstate.quat);
 
     msg.id = MSGID_STATUS;

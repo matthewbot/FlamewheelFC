@@ -1,7 +1,7 @@
 #include "mission/controlpanel.h"
 #include "mission/basestation.h"
 #include "nav/ins.h"
-#include "nav/attitude.h"
+#include "nav/inscomp.h"
 #include "drivers/uart.h"
 #include "drivers/rgbled.h"
 #include "drivers/mag.h"
@@ -22,7 +22,7 @@ int main() {
     mag_init();
     mpu_init();
     ins_init();
-    attitude_init();
+    inscomp_init();
     basestation_init();
 
     controlpanel_run();

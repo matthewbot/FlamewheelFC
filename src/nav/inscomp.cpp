@@ -1,4 +1,4 @@
-#include "nav/attitude.h"
+#include "nav/inscomp.h"
 #include "nav/ins.h"
 #include "nav/calibration.h"
 #include "math/attitude_ekf.h"
@@ -22,38 +22,38 @@ static Signal signal;
 static const float ekf_P_init[] = { 1e-4, 1e-4, 1e-4, 1e-3, 1e-3, 1e-3, 1e-2, 1e-2, 1e-2 };
 
 // task
-static Task attitude_task;
-DECLARE_TASK_STACK(attitude_stack, 16*1024);
-DECLARE_TASK_FUNC(attitude_func);
+static Task inscomp_task;
+DECLARE_TASK_STACK(inscomp_stack, 16*1024);
+DECLARE_TASK_FUNC(inscomp_func);
 
-void attitude_init() {
-    attitude_reset();
+void inscomp_init() {
+    inscomp_reset();
 
-    attitude_task.setup("attitude", Task::HIGH, attitude_func, nullptr, attitude_stack, sizeof(attitude_stack));
+    inscomp_task.setup("inscomp", Task::HIGH, inscomp_func, nullptr, inscomp_stack, sizeof(inscomp_stack));
     KernelCriticalSection crit;
-    sched_add_task(attitude_task);
+    sched_add_task(inscomp_task);
 }
 
-void attitude_start_triad() {
-    attitude_stop();
+void inscomp_start_triad() {
+    inscomp_stop();
     ins_start_triad();
-    attitude_reset();
-    attitude_start();
+    inscomp_reset();
+    inscomp_start();
 }
 
-void attitude_start() {
+void inscomp_start() {
     ins_start();
     Lock lock(mutex);
     running = true;
     signal.notify_all();
 }
 
-void attitude_stop() {
+void inscomp_stop() {
     ins_stop();
     running = false;
 }
 
-void attitude_reset() {
+void inscomp_reset() {
     Lock lock(mutex);
     ekf_state.x = ZeroMatrix<float, 9, 1>();
     ekf_state.P = diag(ConstMatrix<float, 9, 1>(ekf_P_init));
@@ -62,12 +62,12 @@ void attitude_reset() {
     skip = true;
 }
 
-bool attitude_running() {
+bool inscomp_running() {
     return running;
 }
 
-AttitudeState attitude_get_state() {
-    AttitudeState state;
+INSCompState inscomp_get_state() {
+    INSCompState state;
 
     Lock lock(mutex);
     state.quat = quat_mult(ins_get_quaternion(), ekf_state.err_quat());
@@ -76,8 +76,8 @@ AttitudeState attitude_get_state() {
     return state;
 }
 
-AttitudeDebugState attitude_get_debug_state() {
-    AttitudeDebugState state;
+INSCompDebugState inscomp_get_debug_state() {
+    INSCompDebugState state;
 
     Lock lock(mutex);
     state.quat = quat_mult(ins_get_quaternion(), ekf_state.err_quat());
@@ -89,7 +89,7 @@ AttitudeDebugState attitude_get_debug_state() {
     return state;
 }
 
-void attitude_func(void *unused) {
+void inscomp_func(void *unused) {
     while (true) {
         EKFState new_state;
         {
@@ -110,7 +110,7 @@ void attitude_func(void *unused) {
 
         bool acc_en = true;
         if (iteration_ctr > 500)
-            acc_en = new_acc_norm_err < 0.01f;
+            acc_en = new_acc_norm_err < 0.05f;
 
         bool ok = attitude_ekf(new_state, rate, accel, calibration_mag(mag.field), ins, true, acc_en, .01);
 

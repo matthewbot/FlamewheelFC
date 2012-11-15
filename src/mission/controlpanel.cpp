@@ -1,7 +1,7 @@
 #include "mission/controlpanel.h"
 #include "nav/calibration.h"
 #include "nav/ins.h"
-#include "nav/attitude.h"
+#include "nav/inscomp.h"
 #include "math/orientation.h"
 #include "drivers/uart.h"
 #include "drivers/mag.h"
@@ -42,20 +42,20 @@ void controlpanel_run() {
             uart << "INS reset" << endl;
         } else if (strcmp(buf, "ins") == 0) {
             controlpanel_ins();
-        } else if (strcmp(buf, "attitude start") == 0) {
-            attitude_start();
-            uart << "Attitude started" << endl;
-        } else if (strcmp(buf, "attitude stop") == 0) {
-            attitude_stop();
-            uart << "Attitude stopped" << endl;
-        } else if (strcmp(buf, "attitude reset") == 0) {
-            attitude_reset();
-            uart << "Attitude reset" << endl;
-        } else if (strcmp(buf, "attitude triad") == 0) {
-            attitude_start_triad();
-            uart << "Attitude started from triad" << endl;
-        } else if (strcmp(buf, "attitude") == 0) {
-            controlpanel_attitude();
+        } else if (strcmp(buf, "inscomp start") == 0) {
+            inscomp_start();
+            uart << "Inscomp started" << endl;
+        } else if (strcmp(buf, "inscomp stop") == 0) {
+            inscomp_stop();
+            uart << "Inscomp stopped" << endl;
+        } else if (strcmp(buf, "inscomp reset") == 0) {
+            inscomp_reset();
+            uart << "Inscomp reset" << endl;
+        } else if (strcmp(buf, "inscomp triad") == 0) {
+            inscomp_start_triad();
+            uart << "Inscomp started from triad" << endl;
+        } else if (strcmp(buf, "inscomp") == 0) {
+            controlpanel_inscomp();
         } else if (strcmp(buf, "spektrum bind") == 0) {
             spektrum_bind();
             uart << "Entered bind mode" << endl;
@@ -133,11 +133,11 @@ void controlpanel_ins() {
     uart << endl;
 }
 
-void controlpanel_attitude() {
-    attitude_start();
+void controlpanel_inscomp() {
+    inscomp_start();
 
     while (!uart_avail()) {
-        AttitudeDebugState state = attitude_get_debug_state();
+        INSCompDebugState state = inscomp_get_debug_state();
 
         dump_rpy(quat_to_rpy(state.quat));
         dump_vec(state.bias_gyro, 1000);
