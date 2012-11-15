@@ -121,11 +121,11 @@ void controlpanel_ins() {
     while (!uart_avail()) {
         Quaternion quat = ins_get_quaternion();
         VectorF<3> rate = ins_get_rate();
-        VectorF<3> bias = ins_get_bias();
+        VectorF<3> accel = ins_get_accel();
 
         dump_rpy(quat_to_rpy(quat));
         dump_vec(rate, 1000);
-        dump_vec(bias, 1000);
+        dump_vec(accel, 1000);
         uart << endl;
         sched_sleep(1);
     }

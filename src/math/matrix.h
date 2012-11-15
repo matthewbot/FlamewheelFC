@@ -502,7 +502,9 @@ auto cross_mat(const MatrixExpr<Expr> &x_m) -> Matrix<typename Expr::Element, 3,
 
 template <int N, typename In, typename Out>
 struct choleskyrec {
-    static void eval(In &in, Out &out) {
+    static bool eval(In &in, Out &out) {
+        if (in(0, 0) < 0)
+            return false;
         float l11 = sqrtf(in(0, 0));
         out(0, 0) = l11;
 
@@ -514,26 +516,27 @@ struct choleskyrec {
         auto A22 = in.template slice<N-1, N-1>(1, 1);
         A22 = A22 - L21*tr(L21);
 
-        choleskyrec<N-1, decltype(A22), decltype(L22)>::eval(A22, L22);
+        return choleskyrec<N-1, decltype(A22), decltype(L22)>::eval(A22, L22);
     }
 };
 
 template <typename In, typename Out>
 struct choleskyrec<1, In, Out> {
-    static void eval(const In &in, Out &out) {
+    static bool eval(const In &in, Out &out) {
+        if (in(0, 0) < 0)
+            return false;
         out(0, 0) = sqrtf(in(0, 0));
+        return true;
     }
 };
 
 template <typename Expr>
-auto chol(const MatrixExpr<Expr> &in_m) -> Matrix<typename Expr::Element, Expr::Rows, Expr::Rows> {
+bool chol(const MatrixExpr<Expr> &in_m, Matrix<typename Expr::Element, Expr::Rows, Expr::Rows> &out) {
     using T = typename Expr::Element;
     constexpr int N = Expr::Rows;
 
     Matrix<T, N, N> in = in_m.derived();
-    Matrix<T, N, N> out = ZeroMatrix<T, N, N>();
-    choleskyrec<N, Matrix<T, N, N>, Matrix<T, N, N> >::eval(in, out);
-    return out;
+    return choleskyrec<N, Matrix<T, N, N>, Matrix<T, N, N> >::eval(in, out);
 }
 
 template <typename LExpr, typename BExpr>
@@ -569,14 +572,14 @@ Vector<typename LExpr::Element, LExpr::Cols> ltsolve(const MatrixExpr<LExpr> &le
 }
 
 template <typename AExpr, typename BExpr>
-auto cholsolve(const MatrixExpr<AExpr> &aexpr_m, const MatrixExpr<BExpr> &bexpr_m) ->
-Matrix<decltype(aexpr_m.derived()(0,0)*bexpr_m.derived()(0,0)), AExpr::Rows, BExpr::Cols> {
+bool cholsolve(const MatrixExpr<AExpr> &aexpr_m, const MatrixExpr<BExpr> &bexpr_m, Matrix<decltype(aexpr_m.derived()(0,0)*bexpr_m.derived()(0,0)), AExpr::Rows, BExpr::Cols> &out) {
     using T = decltype(aexpr_m.derived()(0,0)*bexpr_m.derived()(0,0));
     auto aexpr = aexpr_m.derived();
     typename BExpr::ReducedStorage bexpr = bexpr_m.derived().reduced();
 
-    auto lt = chol(aexpr);
-    Matrix<T, AExpr::Rows, BExpr::Cols> out;
+    Matrix<typename AExpr::Element, AExpr::Rows, AExpr::Cols> lt;
+    if (!chol(aexpr, lt))
+        return false;
 
     for (int c=0; c<BExpr::Cols; c++) {
         auto b = bexpr.template slice<BExpr::Rows, 1>(0, c);
@@ -586,7 +589,7 @@ Matrix<decltype(aexpr_m.derived()(0,0)*bexpr_m.derived()(0,0)), AExpr::Rows, BEx
         x = utsolve(tr(lt), y);
     }
 
-    return out;
+    return true;
 }
 
 #endif

@@ -2,11 +2,11 @@
 
 static const float g_e[] = { 0, 0, -9.8 };
 static const float m_e[] = { .512308, -0.049210, .857396 };
-static const float R_g[] = { 3e-4, 3e-4, 3e-5 };
+static const float R_g[] = { 1e-4, 1e-4, 1e-5 };
 static const float R_a[] = { 1e-3, 1e-3, 1e-3 };
 static const float R_m[] = { 1e-2, 1e-2, 1e-2 };
-static const float Q_b_a[] = { 1e-8, 1e-8, 1e-8 };
-static const float Q_b_g[] = { 1e-8, 1e-8, 1e-8 };
+static const float Q_b_a[] = { 1e-10, 1e-10, 1e-10 };
+static const float Q_b_g[] = { 1e-10, 1e-10, 1e-10 };
 
 Quaternion EKFState::err_quat() const {
     Quaternion q;
@@ -15,7 +15,7 @@ Quaternion EKFState::err_quat() const {
     return q;
 }
 
-EKFState attitude_ekf(const EKFState &state,
+bool attitude_ekf(EKFState &state,
                   const VectorF<3> &y_g, const VectorF<3> &y_a, const VectorF<3> &y_m,
                   const Quaternion &q_ins, bool mag_en, bool acc_en, float dt) {
     MatrixF<9, 9> A = ZeroMatrix<float, 9, 9>();
@@ -30,16 +30,15 @@ EKFState attitude_ekf(const EKFState &state,
     MatrixF<9, 9> A_d = IdentityMatrix<float, 9>() + dt*A;
     MatrixF<9, 9> Q_d = dt*Q + (0.5f*dt*dt)*(A*Q + Q*tr(A));
 
-    EKFState newstate;
-    newstate.x = A_d*state.x;
-    newstate.P = A_d*state.P*tr(A_d) + Q_d;
+    state.x = VectorF<9>(A_d*state.x);
+    state.P = MatrixF<9, 9>(A_d*state.P*tr(A_d) + Q_d);
 
     for (int r=0; r<9; r++)
         for (int c=0; c<r; c++)
-            newstate.P(c, r) = newstate.P(r, c);
+            state.P(c, r) = state.P(r, c);
 
     if (!acc_en && !mag_en) {
-        return newstate;
+        return true;
     }
 
     MatrixF<3, 3> C = C_mat(q_ins);
@@ -63,13 +62,16 @@ EKFState attitude_ekf(const EKFState &state,
     z.slice<3, 1>(0, 0) = y_a - g_b;
     z.slice<3, 1>(3, 0) = (1/norm(y_m))*y_m - m_b;
 
-    MatrixF<6, 9> Kt = cholsolve(H*newstate.P*tr(H)+R, H*tr(newstate.P));
+    MatrixF<6, 9> Kt;
+    bool ok = cholsolve(H*state.P*tr(H)+R, H*tr(state.P), Kt);
+    if (!ok)
+        return false;
 
-    newstate.x = VectorF<9>(newstate.x + tr(Kt)*(z - H*newstate.x));
-    newstate.P = MatrixF<9, 9>((IdentityMatrix<float, 9>() - tr(Kt)*H)*newstate.P);
+    state.x = VectorF<9>(state.x + tr(Kt)*(z - H*state.x));
+    state.P = MatrixF<9, 9>((IdentityMatrix<float, 9>() - tr(Kt)*H)*state.P);
     for (int r=0; r<9; r++)
         for (int c=0; c<r; c++)
-            newstate.P(c, r) = newstate.P(r, c);
+            state.P(c, r) = state.P(r, c);
 
-    return newstate;
+    return true;
 }

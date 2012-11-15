@@ -4,10 +4,20 @@
 #include "kernel/sync.h"
 #include "kernel/kernel.h"
 
-// state
+// nav state
 static Quaternion quat;
 static VectorF<3> rate;
-static VectorF<3> bias;
+static VectorF<3> rate_bias;
+static VectorF<3> accel;
+static VectorF<3> accel_bias;
+
+// filter state
+static constexpr int filter_len = 32;
+static int16_t filter_accel[filter_len][3];
+static int16_t filter_gyro[filter_len][3];
+static int filter_pos;
+
+// config state
 static bool running;
 static bool skip;
 static Mutex mutex;
@@ -38,7 +48,7 @@ void ins_start_triad() {
     VectorF<3> mag = calibration_mag(magsample.field);
     VectorF<3> gyro = calibration_gyro(sample.gyro);
     Quaternion quat = rot_to_quat(triad_algorithm(accel, mag));
-    ins_reset(quat, gyro);
+    ins_reset(quat, gyro, ZeroMatrix<float, 3, 1>());
 }
 
 void ins_stop() {
@@ -67,55 +77,104 @@ VectorF<3> ins_get_rate() {
     return ret;
 }
 
-VectorF<3> ins_get_bias() {
+VectorF<3> ins_get_accel() {
     VectorF<3> ret;
     {
         Lock lock(mutex);
-        ret = bias;
+        ret = accel;
     }
     return ret;
 }
 
-void ins_correct(const Quaternion &quat_err, const VectorF<3> &bias_err) {
+VectorF<3> ins_get_rate_bias() {
+    VectorF<3> ret;
+    {
+        Lock lock(mutex);
+        ret = rate_bias;
+    }
+    return ret;
+}
+
+VectorF<3> ins_get_accel_bias() {
+    VectorF<3> ret;
+    {
+        Lock lock(mutex);
+        ret = accel_bias;
+    }
+    return ret;
+}
+
+void ins_correct(const Quaternion &quat_err, const VectorF<3> &gyro_bias_err, const VectorF<3> &accel_bias_err) {
     Lock lock(mutex);
     quat = quat_mult(quat, quat_err);
     quat_norm(quat);
-    bias = bias + bias_err;
+    rate_bias = rate_bias + gyro_bias_err;
+    accel_bias = accel_bias + accel_bias_err;
     skip = true;
 }
 
 void ins_reset() {
    Lock lock(mutex);
    quat = {1, 0, 0, 0};
-   bias = {0, 0, 0};
+   rate_bias = {0, 0, 0};
+   accel_bias = {0, 0, 0};
    skip = true;
 }
 
-void ins_reset(const Quaternion &new_quat, const VectorF<3> &new_bias) {
+void ins_reset(const Quaternion &new_quat, const VectorF<3> &new_rate_bias, const VectorF<3> &new_accel_bias) {
     Lock lock(mutex);
     quat = new_quat;
-    bias = new_bias;
+    rate_bias = new_rate_bias;
+    accel_bias = new_accel_bias;
     skip = true;
 }
 
 void ins_func(void *unused) {
     while (true) {
+        VectorF<3> cur_rate_bias;
+        VectorF<3> cur_accel_bias;
         {
             Lock lock(mutex);
             while (!running)
                 signal.wait(lock);
+            cur_rate_bias = rate_bias;
+            cur_accel_bias = accel_bias;
         }
 
         MPUSample sample = mpu_sample();
+        for (int i=0; i<3; i++) {
+            filter_accel[filter_pos][i] = sample.accel[i];
+            filter_gyro[filter_pos][i] = sample.gyro[i];
+        }
+        filter_pos = (filter_pos+1) % filter_len;
 
-        VectorF<3> newrate = calibration_gyro(sample.gyro)-bias;
-        Quaternion newquat = quat_int(quat, rate, 1e-3);
-        quat_norm(newquat);
+        int accel_sum[3] = { 0, 0, 0 };
+        int gyro_sum[3] = { 0, 0, 0 };
+        for (int f=0; f<filter_len; f++) {
+            for (int i=0; i<3; i++) {
+                accel_sum[i] += filter_accel[f][i];
+                gyro_sum[i] += filter_gyro[f][i];
+            }
+        }
+
+        int16_t accel_filt[3];
+        int16_t gyro_filt[3];
+        for (int i=0; i<3; i++) {
+            accel_filt[i] = accel_sum[i] / filter_len;
+            gyro_filt[i] = gyro_sum[i] / filter_len;
+        }
+        VectorF<3> new_accel = calibration_accel(accel_filt) - cur_accel_bias;
+        VectorF<3> new_rate = calibration_gyro(gyro_filt) - cur_rate_bias;
+
+        VectorF<3> raw_rate = calibration_gyro(sample.gyro)-cur_rate_bias;
+        Quaternion new_quat = quat_int(quat, raw_rate, 1e-3);
+        quat_norm(new_quat);
 
         Lock lock(mutex);
         if (running && !skip) {
-            rate = newrate;
-            quat = newquat;
+            rate = new_rate;
+            accel = new_accel;
+            quat = new_quat;
         }
         skip = false;
     }

@@ -10,10 +10,10 @@ struct EKFState {
 
     Quaternion err_quat() const;
     VectorF<3> err_gyro_bias() const { return x.slice<3, 1>(3, 0); }
-    VectorF<3> accel_bias() const { return x.slice<3, 1>(6, 0); }
+    VectorF<3> err_accel_bias() const { return x.slice<3, 1>(6, 0); }
 };
 
-EKFState attitude_ekf(const EKFState &state,
+bool attitude_ekf(EKFState &state,
                   const VectorF<3> &y_g, const VectorF<3> &y_a, const VectorF<3> &y_m,
                   const Quaternion &q_ins, bool mag_en, bool accel_en, float dt);
 
