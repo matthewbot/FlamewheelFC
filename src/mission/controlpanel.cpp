@@ -77,7 +77,7 @@ void controlpanel_sensors_raw() {
         for (int i=0; i<3; i++)
             uart << mpusample.gyro[i] << '\t';
         for (int i=0; i<3; i++)
-            uart << mpusample.gyro[i] << '\t';
+            uart << mpusample.accel[i] << '\t';
         for (int i=0; i<3; i++)
             uart << magsample.field[i] << '\t';
         uart << endl;

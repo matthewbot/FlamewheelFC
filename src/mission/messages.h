@@ -22,6 +22,6 @@ struct StatusMsg {
     int16_t accel_x_bias; // in m/s^2 * 1e3
     int16_t accel_y_bias; // in m/s^2 * 1e3
     int16_t accel_z_bias; // in m/s^2 * 1e3
-};
+} __attribute__((packed));
 
 #endif

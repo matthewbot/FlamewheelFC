@@ -6,8 +6,8 @@ import cairo
 
 class OrientationRenderer(object):
     def __init__(self):
-        self.roll = 10/180*math.pi
-        self.pitch = 20/180*math.pi
+        self.roll = 0
+        self.pitch = 0
 
     def set_roll_pitch(self, roll, pitch):
         self.roll = roll

@@ -35,6 +35,10 @@ static void send_status_message() {
     msg.pitch = float16(rpy[1], 4);
     msg.yaw = float16(rpy[2], 4);
 
+    msg.roll_rate = float16(attstate.rate[0], 4);
+    msg.pitch_rate = float16(attstate.rate[1], 4);
+    msg.yaw_rate = float16(attstate.rate[2], 4);
+
     msg.roll_bias = float16(attstate.bias_gyro[0], 4);
     msg.pitch_bias = float16(attstate.bias_gyro[1], 4);
     msg.yaw_bias = float16(attstate.bias_gyro[2], 4);
@@ -60,7 +64,7 @@ static int16_t float16(float f, int e) {
 void basestation_func(void *unused) {
     sched_sleep(5000); // give the XBee time to initialize
     while (true) {
-        sched_sleep(500);
+        sched_sleep(50);
         send_status_message();
     }
 }

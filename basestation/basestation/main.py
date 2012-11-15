@@ -1,9 +1,9 @@
 from __future__ import division
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 import math
 
-from . import renderers
+from . import renderers, comm
 
 class BaseStation(object):
     def __init__(self):
@@ -22,11 +22,13 @@ class BaseStation(object):
         builder.get_object('graphtop_draw').connect('draw', self.graphtop.draw_callback)
         builder.get_object('graphbottom_draw').connect('draw', self.graphbottom.draw_callback)
 
-        for i in xrange(0,40):
-            val=i/10
-            sample = (math.cos(val), math.sin(val), val)
-            self.graphtop.add_sample(sample)
+        self.quadstate = comm.QuadState('/dev/ttyXBee', self.quad_callback)
 
+    def quad_callback(self):
+        self.orientation.set_roll_pitch(self.quadstate['roll'], self.quadstate['pitch'])
 
+        Gdk.threads_enter()
+        self.main_window.queue_draw()
+        Gdk.threads_leave()
 
 

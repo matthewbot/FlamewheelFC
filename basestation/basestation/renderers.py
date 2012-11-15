@@ -19,7 +19,7 @@ class OrientationRenderer(object):
         size = max(width, height)
         cr.translate(width/2, height/2)
         cr.scale(size/2, size/2)
-        cr.rotate(self.roll)
+        cr.rotate(-self.roll)
         cr.translate(0, self.pitch_rad_to_offset(self.pitch))
 
         self.draw_horizon(cr)
