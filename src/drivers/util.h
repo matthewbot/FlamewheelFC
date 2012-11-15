@@ -8,7 +8,9 @@
 
 // GPIO utilities
 constexpr uint32_t AFRL(int pin, int af) { return af << (4*pin); }
+constexpr uint32_t AFRL_MASK(int pin) { return 0xf << (4*pin); }
 constexpr uint32_t AFRH(int pin, int af) { return af << (4*(pin-8)); }
+constexpr uint32_t AFRH_MASK(int pin) { return 0xf << (4*(pin-8)); }
 
 constexpr uint32_t MODER_OUT(int pin) { return 1 << (2*pin); }
 constexpr uint32_t MODER_AF(int pin) { return 2 << (2*pin); }
