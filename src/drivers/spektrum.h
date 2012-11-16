@@ -8,7 +8,7 @@ void spektrum_bind();
 
 struct SpektrumSample {
     uint8_t headernum;
-    int16_t channel[8];
+    uint16_t channel[8];
 };
 
 SpektrumSample spektrum_sample(bool block=true);

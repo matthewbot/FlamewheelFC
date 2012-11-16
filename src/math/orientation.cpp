@@ -92,3 +92,11 @@ MatrixF<3, 3> C_mat(const Quaternion &q) {
         2*q[1]*q[2] - 2*q[0]*q[3],     2*q[0]*q[0] + 2*q[2]*q[2] - 1, 2*q[2]*q[3] + 2*q[0]*q[1],
         2*q[1]*q[3] + 2*q[0]*q[2],     2*q[2]*q[3] - 2*q[0]*q[1],     2*q[0]*q[0] + 2*q[3]*q[3] - 1 };
 }
+
+VectorF<4> motor_map(const VectorF<4> &out) {
+    return {
+         out[0]+out[1]-out[2]+out[3],
+        -out[0]+out[1]+out[2]+out[3],
+        -out[0]-out[1]-out[2]+out[3],
+         out[0]-out[1]+out[2]+out[3] };
+}

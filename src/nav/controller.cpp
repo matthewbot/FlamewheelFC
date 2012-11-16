@@ -20,8 +20,6 @@ static bool manual_thrust;
 static Mutex mutex;
 static Signal signal;
 
-static VectorF<4> map_motors(const VectorF<4> &out);
-
 // task
 static Task controller_task;
 DECLARE_TASK_STACK(controller_stack, 4*1024);
@@ -102,7 +100,7 @@ void controller_func(void *unused) {
         }
 
         VectorF<4> out = pout + dout;
-        VectorF<4> motors = map_motors(out);
+        VectorF<4> motors = motor_map(out);
 
         uint16_t pwm[4];
         calibration_esc(motors, pwm);
@@ -120,12 +118,4 @@ void controller_func(void *unused) {
 
         sched_sleep(2);
     }
-}
-
-static VectorF<4> map_motors(const VectorF<4> &out) {
-    return {
-         out[0]+out[1]-out[2]+out[3],
-        -out[0]+out[1]+out[2]+out[3],
-        -out[0]-out[1]-out[2]+out[3],
-         out[0]-out[1]+out[2]+out[3] };
 }

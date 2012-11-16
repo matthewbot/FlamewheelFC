@@ -66,10 +66,7 @@ status_fields = [
     ('yaw_rate', 'h', 10**4),
     ('roll_bias', 'h', 10**4),
     ('pitch_bias', 'h', 10**4),
-    ('yaw_bias', 'h', 10**4),
-    ('accel_x_bias', 'h', 10**3),
-    ('accel_y_bias', 'h', 10**3),
-    ('accel_z_bias', 'h', 10**3)]
+    ('yaw_bias', 'h', 10**4)]
 
 def parse_fields(fields, data):
     fmt = "<"+''.join(field[1] for field in fields)

@@ -22,4 +22,6 @@ VectorF<3> quat_to_rpy(const Quaternion &q);
 VectorF<3> quat_to_axisangle(const Quaternion &q, float &angle);
 MatrixF<3, 3> C_mat(const Quaternion &q);
 
+VectorF<4> motor_map(const VectorF<4> &out); // [Tx Ty Tz F]
+
 #endif

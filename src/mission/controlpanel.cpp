@@ -65,12 +65,16 @@ void controlpanel_run() {
             uart << "Entered bind mode" << endl;
         } else if (strcmp(buf, "spektrum") == 0) {
             controlpanel_spektrum();
+        } else if (strcmp(buf, "spektrum cal") == 0) {
+            controlpanel_spektrum_cal();
         } else if (strcmp(buf, "esc test") == 0) {
-            controlpanel_esctest();
+            controlpanel_esc_test();
         } else if (strcmp(buf, "esc sensors") == 0) {
             controlpanel_esc_sensors();
         } else if (strcmp(buf, "esc inscomp") == 0) {
             controlpanel_esc_inscomp();
+        } else if (strcmp(buf, "esc map") == 0) {
+            controlpanel_esc_map();
         } else if (strcmp(buf, "controller") == 0) {
             controlpanel_controller();
         } else if (strcmp(buf, "controller test") == 0) {
@@ -189,7 +193,32 @@ void controlpanel_spektrum() {
     uart << endl;
 }
 
-void controlpanel_esctest() {
+void controlpanel_spektrum_cal() {
+    bool valid=true;
+    while (!uart_avail()) {
+        if (!spektrum_valid()) {
+            if (valid) {
+                valid = false;
+                uart << "Lost signal" << endl;
+            }
+        } else {
+            valid = true;
+            SpektrumSample sample = spektrum_sample(false);
+            VectorF<4> cal = calibration_spektrum(sample);
+
+            uart << "N " << sample.headernum << '\t';
+            dump_vec(cal, 1000);
+            uart << endl;
+        }
+
+        sched_sleep(50);
+    }
+
+    uart_getch();
+    uart << endl;
+}
+
+void controlpanel_esc_test() {
     int escnum = -1;
     bool selectmsg = false;
 
@@ -284,6 +313,28 @@ void controlpanel_esc_inscomp() {
             esc_set(i, pwm);
 
         uart << pwm << endl;
+        sched_sleep(10);
+    }
+
+    esc_all_off();
+    uart_getch();
+    uart << endl;
+}
+
+void controlpanel_esc_map() {
+   while (!uart_avail() && spektrum_valid()) {
+        SpektrumSample speksample = spektrum_sample(false);
+        VectorF<4> out = calibration_spektrum(speksample);
+        out.slice<3, 1>(0, 0) = .25*out.slice<3, 1>(0, 0);
+        VectorF<4> motors = motor_map(out);
+
+        uint16_t pwm[4];
+        calibration_esc(motors, pwm);
+
+        esc_set_all(pwm);
+        for (int i=0; i<4; i++)
+            uart << pwm[i] << '\t';
+        uart << endl;
         sched_sleep(10);
     }
 

@@ -21,13 +21,48 @@ VectorF<3> calibration_mag(const int16_t (&sample)[3]) {
     return ret;
 }
 
+#include "drivers/uart.h"
+
 void calibration_esc(const VectorF<4> &thrust, uint16_t (&pwms)[4]) {
     for (int i=0; i<4; i++) {
-        if (thrust[i] > 1)
-            pwms[i] = 1000;
-        else if (thrust[i] < 1)
-            pwms[i] = 0;
-        else
-            pwms[i] = static_cast<uint16_t>(thrust[i]*1000);
+        float t = thrust[i];
+        uint16_t pwm;
+        if (t > 1) {
+            pwm = 1000;
+        } else if (t < 0) {
+            pwm = 0;
+        } else {
+            pwm = static_cast<uint16_t>(t*1000);
+        }
+        pwms[i] = pwm;
     }
+}
+
+static float spektrum_to_float(uint16_t chan, uint16_t min, uint16_t max, float deadzone) {
+    float val = -2*(chan - min)/static_cast<float>(max - min) + 1;
+    if (val > 1)
+        val = 1;
+    else if (val < -1)
+        val = -1;
+    else if (fabs(val) < deadzone)
+        val = 0;
+    return val;
+}
+
+static float spektrum_to_unsigned_float(uint16_t chan, uint16_t min, uint16_t max) {
+    float val = (chan - min)/static_cast<float>(max - min);
+    if (val > 1)
+        val = 1;
+    else if (val < 0)
+        val = 0;
+    return val;
+}
+
+VectorF<4> calibration_spektrum(const SpektrumSample &sample) {
+    VectorF<4> out;
+    out[0] = spektrum_to_float(sample.channel[1], 170, 830, .02);
+    out[1] = spektrum_to_float(sample.channel[2], 145, 860, .02);
+    out[2] = spektrum_to_float(sample.channel[3], 200, 850, .05);
+    out[3] = spektrum_to_unsigned_float(sample.channel[0], 200, 845);
+    return out;
 }
