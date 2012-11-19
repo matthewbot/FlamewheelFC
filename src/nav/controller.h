@@ -8,6 +8,7 @@ void controller_reset();
 
 void controller_start();
 void controller_stop();
+bool controller_running();
 
 enum class ControllerMode { RATE, ATTITUDE, ALTITUDE };
 
@@ -20,6 +21,7 @@ struct ControllerSetpoint {
 };
 
 void controller_set(const ControllerSetpoint &setpoint);
+ControllerSetpoint controller_get();
 
 struct ControllerDebug {
     VectorF<4> pout;

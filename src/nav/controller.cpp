@@ -37,8 +37,8 @@ void controller_reset() {
     running = false;
     manual_thrust = false;
 
-    gains.p = VectorF<3>{1, 1, .1};
-    gains.d = VectorF<3>{.3, .3, .1};
+    gains.p = VectorF<3>{.5, .5, .05};
+    gains.d = VectorF<3>{.1, .1, .03};
 }
 
 void controller_start() {
@@ -52,19 +52,18 @@ void controller_stop() {
     running = false;
 }
 
+bool controller_running() {
+    return running;
+}
+
 void controller_set(const ControllerSetpoint &new_setpoint) {
     Lock lock(mutex);
     setpoint = new_setpoint;
 }
 
 ControllerDebug controller_get_debug() {
-    ControllerDebug ret;
-
-    {
-        Lock lock(mutex);
-        ret = debug;
-    }
-    return ret;
+    Lock lock(mutex);
+    return debug;
 }
 
 void controller_func(void *unused) {
@@ -103,7 +102,7 @@ void controller_func(void *unused) {
         VectorF<4> motors = motor_map(out);
 
         uint16_t pwm[4];
-        calibration_esc(motors, pwm);
+        calibration_esc(motors, pwm, 200);
         esc_set_all(pwm);
 
         {

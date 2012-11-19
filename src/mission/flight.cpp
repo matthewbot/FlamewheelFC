@@ -1,0 +1,108 @@
+#include "mission/flight.h"
+#include "nav/controller.h"
+#include "nav/calibration.h"
+#include "nav/inscomp.h"
+#include "drivers/board.h"
+#include "drivers/spektrum.h"
+#include "drivers/rgbled.h"
+#include "drivers/esc.h"
+#include "math/orientation.h"
+#include "kernel/task.h"
+#include "kernel/kernel.h"
+
+// state
+static float heading;
+
+// task
+static Task flight_task;
+DECLARE_TASK_STACK(flight_stack, 2*1024);
+DECLARE_TASK_FUNC(flight_func);
+
+static void wait_arm();
+static void beep();
+static void fly();
+
+void flight_init() {
+    flight_task.setup("flight", Task::MED, flight_func, nullptr, flight_stack, sizeof(flight_stack));
+    if (board_switch()) {
+        KernelCriticalSection crit;
+        sched_add_task(flight_task);
+    }
+}
+
+static void flight_func(void *unused) {
+    while (true) {
+        rgbled_set(0xFF0000, 100);
+        wait_arm();
+
+        rgbled_set(0xFF6000, 100);
+        beep();
+        inscomp_start_triad();
+
+        rgbled_set(0x30FF30, 100);
+        fly();
+    }
+}
+
+static void wait_arm() {
+    int armsamples=0;
+
+    while (armsamples < 5) {
+        sched_sleep(100);
+        if (!spektrum_valid())
+            continue;
+
+        SpektrumSample sample = spektrum_sample(false);
+        VectorF<4> vec = calibration_spektrum(sample);
+        if (vec[3] < .05 && fabsf(vec[2]) > .95)
+            armsamples++;
+        else
+            armsamples = 0;
+    }
+}
+
+static const uint16_t tones[] = { 1046, 1174, 1318, 1397 };
+
+static void beep() {
+    for (int i; i<4; i++) {
+        board_buzzer(tones[i]);
+        sched_sleep(100);
+    }
+    board_buzzer(0);
+}
+
+static void fly() {
+    INSCompState state = inscomp_get_state();
+    heading = quat_to_yaw(state.quat);
+
+    while (true) {
+        SpektrumSample sample = spektrum_sample();
+        VectorF<4> vec = calibration_spektrum(sample);
+
+        if (vec[3] > .1) {
+            heading += vec[2]*.05;
+            if (heading < -(float)M_PI)
+                heading += (float)M_PI;
+            else if (heading > (float)M_PI)
+                heading -= (float)M_PI;
+
+            float roll = vec[0]*.8;
+            float pitch = vec[1]*.8;
+
+            ControllerSetpoint setpoint;
+            setpoint.mode = ControllerMode::ATTITUDE;
+            setpoint.rate_d = { 0, 0, 0 };
+            setpoint.att_d = rpy_to_quat(VectorF<3>{roll, pitch, heading});
+            setpoint.thrust_d = vec[3];
+
+            controller_set(setpoint);
+            if (!controller_running())
+                controller_start();
+        } else {
+            controller_stop();
+            esc_all_off();
+        }
+    }
+}
+
+

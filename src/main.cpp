@@ -1,5 +1,6 @@
 #include "mission/controlpanel.h"
 #include "mission/basestation.h"
+#include "mission/flight.h"
 #include "nav/ins.h"
 #include "nav/inscomp.h"
 #include "nav/controller.h"
@@ -30,6 +31,7 @@ int main() {
     inscomp_init();
     controller_init();
     basestation_init();
+    flight_init();
 
     controlpanel_run();
 }

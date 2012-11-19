@@ -13,15 +13,18 @@ MatrixF<3, 3> triad_algorithm(const VectorF<3> &accel, const VectorF<3> &mag);
 VectorF<3> rot_to_rpy(const MatrixF<3, 3> &rot);
 Quaternion rot_to_quat(const MatrixF<3, 3> &rot);
 
+Quaternion axisangle_to_quat(const VectorF<3> &axis, float angle);
+Quaternion rpy_to_quat(const VectorF<3> &rpy);
+
 Quaternion quat_mult(const Quaternion &a, const Quaternion &b);
 void quat_norm(Quaternion &a);
 Quaternion quat_conj(const Quaternion &q);
 Quaternion quat_int(const Quaternion &q, const VectorF<3> &w, float dt);
-Quaternion quat_axisangle(const VectorF<3> &axis, float angle);
+
 VectorF<3> quat_to_rpy(const Quaternion &q);
+float quat_to_yaw(const Quaternion &q);
 VectorF<3> quat_to_axisangle(const Quaternion &q, float &angle);
 MatrixF<3, 3> C_mat(const Quaternion &q);
-
 VectorF<4> motor_map(const VectorF<4> &out); // [Tx Ty Tz F]
 
 #endif

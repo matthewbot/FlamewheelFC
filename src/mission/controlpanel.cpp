@@ -79,8 +79,17 @@ void controlpanel_run() {
             controlpanel_controller();
         } else if (strcmp(buf, "controller test") == 0) {
             controlpanel_controller_test();
+        } else if (strcmp(buf, "controller start") == 0) {
+            controller_start();
+            uart << "controller started" << endl;
+        } else if (strcmp(buf, "controller stop") == 0) {
+            controller_stop();
+            esc_all_off();
+            uart << "controller stop" << endl;
         } else if (strcmp(buf, "bat") == 0) {
             uart << board_get_voltage() * 1000 << " mV" << endl;
+        } else if (strcmp(buf, "switch") == 0) {
+            uart << "switch " << (board_switch() ? "on" : "off") << endl;
         } else if (buf[0] != '\0') {
             uart << "unknown command '" << buf << '\'' << endl;
         }
@@ -329,7 +338,7 @@ void controlpanel_esc_map() {
         VectorF<4> motors = motor_map(out);
 
         uint16_t pwm[4];
-        calibration_esc(motors, pwm);
+        calibration_esc(motors, pwm, 0);
 
         esc_set_all(pwm);
         for (int i=0; i<4; i++)
@@ -347,14 +356,19 @@ void controlpanel_controller() {
     controller_start();
 
     while (!uart_avail()) {
-        ControllerDebug state = controller_get_debug();
+        if (controller_running()) {
+            ControllerDebug state = controller_get_debug();
 
-        dump_vec(state.pout, 1000);
-        dump_vec(state.dout, 1000);
-        dump_vec(state.motors, 1000);
-        uart << endl;
+            dump_vec(state.pout, 1000);
+            dump_vec(state.dout, 1000);
+            dump_vec(state.motors, 1000);
+            uart << endl;
+        } else {
+            uart << "Controller disabled" << endl;
+        }
         sched_sleep(2);
     }
+    controller_stop();
 
     uart_getch();
     uart << endl;
@@ -365,7 +379,7 @@ void controlpanel_controller_test() {
     set.mode = ControllerMode::ATTITUDE;
     set.rate_d = ZeroMatrix<float, 3, 1>();
     set.att_d = Quaternion{ 1, 0, 0, 0 };
-    set.thrust_d = .5;
+    set.thrust_d = .25;
     controller_set(set);
 
     controlpanel_controller();

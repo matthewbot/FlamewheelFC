@@ -21,9 +21,7 @@ VectorF<3> calibration_mag(const int16_t (&sample)[3]) {
     return ret;
 }
 
-#include "drivers/uart.h"
-
-void calibration_esc(const VectorF<4> &thrust, uint16_t (&pwms)[4]) {
+void calibration_esc(const VectorF<4> &thrust, uint16_t (&pwms)[4], uint16_t minpwm) {
     for (int i=0; i<4; i++) {
         float t = thrust[i];
         uint16_t pwm;
@@ -34,6 +32,10 @@ void calibration_esc(const VectorF<4> &thrust, uint16_t (&pwms)[4]) {
         } else {
             pwm = static_cast<uint16_t>(t*1000);
         }
+
+        if (pwm < minpwm)
+            pwm = minpwm;
+
         pwms[i] = pwm;
     }
 }

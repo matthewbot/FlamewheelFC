@@ -35,6 +35,29 @@ Quaternion rot_to_quat(const MatrixF<3, 3> &rot) {
     return q;
 }
 
+Quaternion axisangle_to_quat(const VectorF<3> &axis, float angle) {
+    if (fabsf(angle) < 1e-8f)
+        return { 1, 0, 0, 0 };
+
+    Quaternion ret;
+    ret[0] = cosf(angle/2);
+    ret.slice<3, 1>(1, 0) = (sinf(angle/2)/norm(axis))*axis;
+    return ret;
+}
+
+Quaternion rpy_to_quat(const VectorF<3> &rpy) {
+    float cr = cos(rpy[0]/2);
+    float sr = sin(rpy[0]/2);
+    float cp = cos(rpy[1]/2);
+    float sp = sin(rpy[1]/2);
+    float cy = cos(rpy[2]/2);
+    float sy = sin(rpy[2]/2);
+    return { cr*cp*cy + sr*sp*sy,
+            sr*cp*cy - cr*sr*sy,
+            cr*sp*cy + sr*cp*sy,
+            cr*cp*sy - sr*sp*cy };
+}
+
 Quaternion quat_mult(const Quaternion &a, const Quaternion &b) {
     return {
         a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3],
@@ -60,16 +83,6 @@ Quaternion quat_int(const Quaternion &q, const VectorF<3> &w, float dt) {
     return q + (dt/2)*(M * q);
 }
 
-Quaternion quat_axisangle(const VectorF<3> &axis, float angle) {
-    if (fabsf(angle) < 1e-8f)
-        return { 1, 0, 0, 0 };
-
-    Quaternion ret;
-    ret[0] = cosf(angle/2);
-    ret.slice<3, 1>(1, 0) = (sinf(angle/2)/norm(axis))*axis;
-    return ret;
-}
-
 VectorF<3> quat_to_axisangle(const Quaternion &quat, float &angle) {
     VectorF<3> axis = quat.slice<3, 1>(1, 0);
     angle = 2*acosf(quat[0]);
@@ -84,6 +97,10 @@ VectorF<3> quat_to_rpy(const Quaternion &q) {
         atan2f(2*(q[0]*q[1]+q[2]*q[3]), 1 - 2*(q[1]*q[1]+q[2]*q[2])),
         asinf(2*q[0]*q[2]-q[3]*q[1]),
         atan2f(2*(q[0]*q[3]+q[1]*q[2]), 1 - 2*(q[2]*q[2]+q[3]*q[3])) };
+}
+
+float quat_to_yaw(const Quaternion &q) {
+    return atan2f(2*(q[0]*q[3]+q[1]*q[2]), 1 - 2*(q[2]*q[2]+q[3]*q[3]));
 }
 
 MatrixF<3, 3> C_mat(const Quaternion &q) {
