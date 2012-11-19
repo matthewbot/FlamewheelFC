@@ -1,6 +1,7 @@
 #include "mission/basestation.h"
 #include "mission/messages.h"
 #include "nav/inscomp.h"
+#include "nav/controller.h"
 #include "drivers/xbee.h"
 #include "kernel/sched.h"
 #include "kernel/kernel.h"
@@ -27,6 +28,7 @@ void basestation_init() {
 
 static void send_status_message() {
     INSCompDebugState attstate = inscomp_get_debug_state();
+    ControllerDebug controllerdebug = controller_get_debug();
     VectorF<3> rpy = quat_to_rpy(attstate.quat);
 
     msg.id = MSGID_STATUS;
@@ -42,6 +44,14 @@ static void send_status_message() {
     msg.roll_bias = float16(attstate.bias_gyro[0], 4);
     msg.pitch_bias = float16(attstate.bias_gyro[1], 4);
     msg.yaw_bias = float16(attstate.bias_gyro[2], 4);
+
+    msg.roll_p = float16(controllerdebug.pout[0], 4);
+    msg.pitch_p = float16(controllerdebug.pout[1], 4);
+    msg.yaw_p = float16(controllerdebug.pout[2], 4);
+
+    msg.roll_d = float16(controllerdebug.dout[0], 4);
+    msg.pitch_d = float16(controllerdebug.dout[1], 4);
+    msg.yaw_d = float16(controllerdebug.dout[2], 4);
 
     XBeeSendResponse resp = xbee_send(1, reinterpret_cast<const char *>(&msg), sizeof(msg));
     valid = (resp == XBeeSendResponse::SUCCESS);
@@ -60,7 +70,8 @@ static int16_t float16(float f, int e) {
 void basestation_func(void *unused) {
     sched_sleep(5000); // give the XBee time to initialize
     while (true) {
-        sched_sleep(50);
+        int start = sched_now();
         send_status_message();
+        sched_sleep(50 - (sched_now() - start));
     }
 }
