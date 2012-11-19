@@ -28,8 +28,9 @@ void basestation_init() {
 
 static void send_status_message() {
     INSCompDebugState attstate = inscomp_get_debug_state();
-    ControllerDebug controllerdebug = controller_get_debug();
     VectorF<3> rpy = quat_to_rpy(attstate.quat);
+    ControllerDebug controllerdebug = controller_get_debug();
+    ControllerGains controllergains = controller_get_gains();
 
     msg.id = MSGID_STATUS;
 
@@ -52,6 +53,14 @@ static void send_status_message() {
     msg.roll_d = float16(controllerdebug.dout[0], 4);
     msg.pitch_d = float16(controllerdebug.dout[1], 4);
     msg.yaw_d = float16(controllerdebug.dout[2], 4);
+
+    msg.gain_roll_p = float16(controllergains.p[0], 4);
+    msg.gain_pitch_p = float16(controllergains.p[1], 4);
+    msg.gain_yaw_p = float16(controllergains.p[2], 4);
+
+    msg.gain_roll_d = float16(controllergains.d[0], 4);
+    msg.gain_pitch_d = float16(controllergains.d[1], 4);
+    msg.gain_yaw_d = float16(controllergains.d[2], 4);
 
     XBeeSendResponse resp = xbee_send(1, reinterpret_cast<const char *>(&msg), sizeof(msg));
     valid = (resp == XBeeSendResponse::SUCCESS);

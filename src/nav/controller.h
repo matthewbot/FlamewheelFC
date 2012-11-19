@@ -38,5 +38,6 @@ struct ControllerGains {
 };
 
 void controller_set_gains(const ControllerGains &gains);
+ControllerGains controller_get_gains();
 
 #endif

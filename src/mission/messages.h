@@ -26,6 +26,14 @@ struct StatusMsg {
     int16_t roll_d;
     int16_t pitch_d;
     int16_t yaw_d;
+
+    int16_t gain_roll_p;
+    int16_t gain_pitch_p;
+    int16_t gain_yaw_p;
+
+    int16_t gain_roll_d;
+    int16_t gain_pitch_d;
+    int16_t gain_yaw_d;
 } __attribute__((packed));
 
 #endif

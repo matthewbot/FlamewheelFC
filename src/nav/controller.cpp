@@ -66,6 +66,11 @@ ControllerDebug controller_get_debug() {
     return debug;
 }
 
+ControllerGains controller_get_gains() {
+    Lock lock(mutex);
+    return gains;
+}
+
 void controller_func(void *unused) {
     while (true) {
         ControllerSetpoint cur_setpoint;

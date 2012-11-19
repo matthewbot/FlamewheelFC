@@ -86,6 +86,9 @@ void controlpanel_run() {
             controller_stop();
             esc_all_off();
             uart << "controller stop" << endl;
+        } else if (strcmp(buf, "controller gains") == 0) {
+            ControllerGains gains = controller_get_gains();
+            uart << "P "; dump_vec(gains.p, 1000); uart << "D "; dump_vec(gains.d, 1000); uart << endl;
         } else if (strcmp(buf, "bat") == 0) {
             uart << board_get_voltage() * 1000 << " mV" << endl;
         } else if (strcmp(buf, "switch") == 0) {

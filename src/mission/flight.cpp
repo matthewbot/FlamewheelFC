@@ -72,14 +72,16 @@ static void beep() {
 }
 
 static void fly() {
+    int disarm_cycles=0;
     INSCompState state = inscomp_get_state();
     heading = quat_to_yaw(state.quat);
 
-    while (true) {
+    while (disarm_cycles < 5) {
         SpektrumSample sample = spektrum_sample();
         VectorF<4> vec = calibration_spektrum(sample);
 
         if (vec[3] > .1) {
+            disarm_cycles = 0;
             heading += vec[2]*.05;
             if (heading < -(float)M_PI)
                 heading += (float)M_PI;
@@ -99,6 +101,10 @@ static void fly() {
             if (!controller_running())
                 controller_start();
         } else {
+            if (fabsf(vec[2]) > .95)
+                disarm_cycles++;
+            else
+                disarm_cycles = 0;
             controller_stop();
             esc_all_off();
         }
