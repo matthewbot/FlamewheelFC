@@ -11,7 +11,7 @@ static VectorF<3> rate_bias;
 static VectorF<3> accel;
 
 // filter state
-static constexpr int filter_len = 32;
+static constexpr int filter_len = 128;
 static int16_t filter_accel[filter_len][3];
 static int16_t filter_gyro[filter_len][3];
 static int filter_pos;

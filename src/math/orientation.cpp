@@ -95,7 +95,7 @@ VectorF<3> quat_to_axisangle(const Quaternion &quat, float &angle) {
 VectorF<3> quat_to_rpy(const Quaternion &q) {
     return {
         atan2f(2*(q[0]*q[1]+q[2]*q[3]), 1 - 2*(q[1]*q[1]+q[2]*q[2])),
-        asinf(2*q[0]*q[2]-q[3]*q[1]),
+        asinf(2*q[0]*q[2]-2*q[3]*q[1]),
         atan2f(2*(q[0]*q[3]+q[1]*q[2]), 1 - 2*(q[2]*q[2]+q[3]*q[3])) };
 }
 
