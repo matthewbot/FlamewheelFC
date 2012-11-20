@@ -82,5 +82,19 @@ void basestation_func(void *unused) {
         int start = sched_now();
         send_status_message();
         sched_sleep(50 - (sched_now() - start));
+
+        if (xbee_receive_avail()) {
+            char buf[128];
+            XBeeReceiveHeader header;
+            int got = xbee_receive(buf, header);
+            if (buf[0] == MSGID_GAINS) {
+                const GainsMessage &msg = *(GainsMessage *)buf;
+
+                ControllerGains gains;
+                gains.p = (1e-4f) * VectorF<3>{ (float)msg.roll_p, (float)msg.pitch_p, (float)msg.yaw_p };
+                gains.d = (1e-4f) * VectorF<3>{ (float)msg.roll_d, (float)msg.pitch_d, (float)msg.yaw_d };
+                controller_set_gains(gains);
+            }
+        }
     }
 }

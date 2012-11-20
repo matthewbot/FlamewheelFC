@@ -6,6 +6,7 @@ import struct
 import numpy
 
 API_ID_RX_PACKET_64 = 0x80
+API_ID_TX_PACKET_16 = 0x01
 
 class XBeeDriver(object):
     def __init__(self, devname, callback):
@@ -14,6 +15,13 @@ class XBeeDriver(object):
         self.thread = threading.Thread(target=self.run, name='XBeeParser')
         self.thread.setDaemon(True)
         self.thread.start()
+
+    def send_packet(self, addr, data):
+        packet_start = struct.pack(">BH", 0x7E, len(data)+5)
+        packet_header = struct.pack(">BBHB", API_ID_TX_PACKET_16, 1, addr, 0)
+        checksum = 0xFF - (sum(map(ord, packet_header + data)) & 0xFF)
+        packet = packet_start + packet_header + data + chr(checksum)
+        self.ser.write(packet)
 
     def run(self):
         while True:
@@ -72,12 +80,30 @@ status_fields = [
     ('yaw_p', 'h', 10**4),
     ('roll_d', 'h', 10**4),
     ('pitch_d', 'h', 10**4),
+    ('yaw_d', 'h', 10**4),
+    ('gain_roll_p', 'h', 10**4),
+    ('gain_pitch_p', 'h', 10**4),
+    ('gain_yaw_p', 'h', 10**4),
+    ('gain_roll_d', 'h', 10**4),
+    ('gain_pitch_d', 'h', 10**4),
+    ('gain_yaw_d', 'h', 10**4)]
+
+gain_fields = [
+    ('roll_p', 'h', 10**4),
+    ('pitch_p', 'h', 10**4),
+    ('yaw_p', 'h', 10**4),
+    ('roll_d', 'h', 10**4),
+    ('pitch_d', 'h', 10**4),
     ('yaw_d', 'h', 10**4)]
 
 def parse_fields(fields, data):
     fmt = "<"+''.join(field[1] for field in fields)
     vals = struct.unpack(fmt, data)
     return { field[0]: val/field[2] for (field, val) in zip(fields, vals) }
+
+def gen_fields(fields, data):
+    fmt = "<"+''.join(field[1] for field in fields)
+    return struct.pack(fmt, *(data[field[0]]*field[2] for field in fields))
 
 class QuadState(object):
     def __init__(self, devname, callback):
@@ -93,3 +119,6 @@ class QuadState(object):
         if rf_data[0] == 's':
             self.data.update(parse_fields(status_fields, rf_data[1:]))
         self.callback()
+
+    def send_gains(self, gains):
+        self.xbee.send_packet(0xFFFF, 'g'+gen_fields(gain_fields, gains))

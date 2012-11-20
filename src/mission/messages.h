@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 static constexpr char MSGID_STATUS = 's';
+static constexpr char MSGID_GAINS = 'g';
 
 struct StatusMsg {
     char id;
@@ -34,6 +35,17 @@ struct StatusMsg {
     int16_t gain_roll_d;
     int16_t gain_pitch_d;
     int16_t gain_yaw_d;
+} __attribute__((packed));
+
+struct GainsMessage {
+    char id;
+    int16_t roll_p;
+    int16_t pitch_p;
+    int16_t yaw_p;
+
+    int16_t roll_d;
+    int16_t pitch_d;
+    int16_t yaw_d;
 } __attribute__((packed));
 
 #endif

@@ -26,6 +26,7 @@ static constexpr int API_TX_16 = 0x01;
 static constexpr int API_AT_COMMAND = 0x08;
 
 static constexpr int API_RX_16 = 0x81;
+static constexpr int API_RX_64 = 0x82;
 static constexpr int API_AT_RESPONSE = 0x88;
 static constexpr int API_TX_STATUS = 0x89;
 
@@ -136,6 +137,10 @@ XBeeSendResponse xbee_send(uint16_t addr, const char *data, size_t data_len) {
     return sendresp;
 }
 
+bool xbee_receive_avail() {
+    return msg_received;
+}
+
 int xbee_receive(char *data, XBeeReceiveHeader &header) {
     while (!msg_received)
         rx_signal.wait();
@@ -187,6 +192,14 @@ static void receive_packet() {
         msg_rssi = rx_buf[3];
         msg_len = rx_len - 6;
         memcpy(msg_data, &rx_buf[5], msg_len);
+        msg_received = true;
+        break;
+
+    case API_RX_64:
+        msg_addr = 0xFFFF;
+        msg_rssi = rx_buf[9];
+        msg_len = rx_len - 12;
+        memcpy(msg_data, &rx_buf[11], msg_len);
         msg_received = true;
         break;
 

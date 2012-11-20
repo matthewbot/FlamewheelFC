@@ -71,6 +71,11 @@ ControllerGains controller_get_gains() {
     return gains;
 }
 
+void controller_set_gains(const ControllerGains &new_gains) {
+    Lock lock(mutex);
+    gains = new_gains;
+}
+
 void controller_func(void *unused) {
     while (true) {
         ControllerSetpoint cur_setpoint;

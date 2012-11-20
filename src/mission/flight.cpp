@@ -46,6 +46,7 @@ static void flight_func(void *unused) {
 
 static void wait_arm() {
     int armsamples=0;
+    bool allow_arm = false;
 
     while (armsamples < 5) {
         sched_sleep(100);
@@ -54,10 +55,13 @@ static void wait_arm() {
 
         SpektrumSample sample = spektrum_sample(false);
         VectorF<4> vec = calibration_spektrum(sample);
-        if (vec[3] < .05 && fabsf(vec[2]) > .95)
-            armsamples++;
-        else
+        if (vec[3] < .05 && fabsf(vec[2]) > .95) {
+            if (allow_arm)
+                armsamples++;
+        } else {
+            allow_arm = true;
             armsamples = 0;
+        }
     }
 }
 
@@ -79,6 +83,8 @@ static void fly() {
     while (disarm_cycles < 5) {
         SpektrumSample sample = spektrum_sample();
         VectorF<4> vec = calibration_spektrum(sample);
+        if (!spektrum_valid())
+            vec = { 0, 0, 0, 0 }; // TODO handle controller dropout better
 
         if (vec[3] > .1) {
             disarm_cycles = 0;

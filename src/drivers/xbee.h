@@ -17,6 +17,7 @@ struct XBeeReceiveHeader {
     uint8_t rssi;
 };
 
+bool xbee_receive_avail();
 int xbee_receive(char *data, XBeeReceiveHeader &header);
 
 #endif
