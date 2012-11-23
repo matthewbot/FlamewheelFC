@@ -125,7 +125,7 @@ void controlpanel_sensors_cal() {
         VectorF<3> accel = calibration_accel(mpusample.accel);
         VectorF<3> mag = calibration_mag(magsample.field);
 
-        dump_vec(accel, 1000);
+        dump_vec(gyro, 1000);
         dump_vec(accel, 1000);
         dump_vec(mag, 1);
         uart << endl;
@@ -381,7 +381,7 @@ void controlpanel_controller_test() {
     ControllerSetpoint set;
     set.mode = ControllerMode::ATTITUDE;
     set.rate_d = ZeroMatrix<float, 3, 1>();
-    set.att_d = Quaternion{ 1, 0, 0, 0 };
+    set.att_d = rpy_to_quat(VectorF<3>{0, 0, quat_to_yaw(inscomp_get_state().quat)});
     set.thrust_d = .25;
     controller_set(set);
 

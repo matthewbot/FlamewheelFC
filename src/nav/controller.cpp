@@ -97,8 +97,10 @@ void controller_func(void *unused) {
         dout.slice<3, 1>(0, 0) = diag(cur_gains.d)*(setpoint.rate_d - state.rate);
 
         if (cur_setpoint.mode >= ControllerMode::ATTITUDE) {
+            Quaternion err = quat_mult(quat_conj(state.quat), setpoint.att_d);
+            quat_norm(err);
             float angle;
-            VectorF<3> axis = quat_to_axisangle(quat_mult(setpoint.att_d, quat_conj(state.quat)), angle);
+            VectorF<3> axis = quat_to_axisangle(err, angle);
             pout.slice<3, 1>(0, 0) = angle*diag(cur_gains.p)*axis;
         }
 
