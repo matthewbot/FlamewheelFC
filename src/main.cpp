@@ -5,6 +5,7 @@
 #include "nav/inscomp.h"
 #include "nav/controller.h"
 #include "drivers/uart.h"
+#include "drivers/i2c.h"
 #include "drivers/rgbled.h"
 #include "drivers/mag.h"
 #include "drivers/mpu.h"
@@ -25,6 +26,7 @@ int main() {
     rgbled_set(0xFF8000, 100);
     spektrum_init();
     xbee_init();
+    i2c_init();
     mag_init();
     mpu_init();
     ins_init();
