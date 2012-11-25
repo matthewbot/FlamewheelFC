@@ -2,6 +2,7 @@ from __future__ import division
 
 from gi.repository import Gtk, Gdk
 import math
+import serial
 
 from . import renderers, comm
 
@@ -34,10 +35,16 @@ class BaseStation(object):
         self.builder.get_object('graphbottom_draw').connect('draw', self.graphbottom.draw_callback)
 
         self.builder.get_object('gains_button').connect('clicked', self.gains_callback)
+        self.builder.get_object('plot_combo').connect('changed', self.plot_callback)
+
         self.builder.get_object('ok_button').connect('clicked', self.gains_ok_callback)
         self.builder.get_object('cancel_button').connect('clicked', lambda ev: self.gains_dialog.hide())
 
-        self.quadstate = comm.QuadState('/dev/ttyXBee', self.quad_callback)
+        self.current_plot = 'attitude'
+        try:
+            self.quadstate = comm.QuadState('/dev/ttyXBee', self.quad_callback)
+        except serial.SerialException:
+            self.quadstate = None
 
     def quad_callback(self):
         self.orientation.set_roll_pitch(self.quadstate['roll'], self.quadstate['pitch'])
@@ -45,6 +52,18 @@ class BaseStation(object):
         Gdk.threads_enter()
         self.main_window.queue_draw()
         Gdk.threads_leave()
+
+    def plot_callback(self, combo):
+        tree_iter = combo.get_active_iter()
+        if tree_iter != None:
+            model = combo.get_model()
+            self.current_plot = model[tree_iter][0]
+        else:
+            self.current_plot = None
+
+        self.graphtop.clear_samples()
+        self.graphbottom.clear_samples()
+        print self.current_plot
 
     def gains_callback(self, event):
         for gain in all_gains():

@@ -101,6 +101,9 @@ class GraphRenderer(object):
         self.colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
         self.vertscale = .5
 
+    def clear_samples(self):
+        del self.samples[:]
+
     def add_sample(self, sample):
         assert(len(sample) == self.signalcount)
         self.samples.append(sample)

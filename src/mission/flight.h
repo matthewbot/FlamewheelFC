@@ -2,7 +2,7 @@
 #define FC_MISSION_FLIGHT_H
 
 void flight_init();
-void flight_start();
-void flight_stop();
+
+bool flight_enabled();
 
 #endif

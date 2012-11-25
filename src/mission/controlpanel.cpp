@@ -1,4 +1,5 @@
 #include "mission/controlpanel.h"
+#include "mission/flight.h"
 #include "nav/calibration.h"
 #include "nav/ins.h"
 #include "nav/inscomp.h"
@@ -356,8 +357,6 @@ void controlpanel_esc_map() {
 }
 
 void controlpanel_controller() {
-    controller_start();
-
     while (!uart_avail()) {
         if (controller_running()) {
             ControllerDebug state = controller_get_debug();
@@ -371,13 +370,15 @@ void controlpanel_controller() {
         }
         sched_sleep(2);
     }
-    controller_stop();
 
     uart_getch();
     uart << endl;
 }
 
 void controlpanel_controller_test() {
+    if (flight_enabled())
+        return;
+
     ControllerSetpoint set;
     set.mode = ControllerMode::ATTITUDE;
     set.rate_d = ZeroMatrix<float, 3, 1>();

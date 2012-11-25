@@ -12,6 +12,7 @@
 
 // state
 static float heading;
+static bool enabled;
 
 // task
 static Task flight_task;
@@ -27,7 +28,12 @@ void flight_init() {
     if (board_switch()) {
         KernelCriticalSection crit;
         sched_add_task(flight_task);
+        enabled = true;
     }
+}
+
+bool flight_enabled() {
+    return enabled;
 }
 
 static void flight_func(void *unused) {
