@@ -8,6 +8,7 @@
 #include "drivers/i2c.h"
 #include "drivers/rgbled.h"
 #include "drivers/mag.h"
+#include "drivers/alt.h"
 #include "drivers/mpu.h"
 #include "drivers/spektrum.h"
 #include "drivers/esc.h"
@@ -27,7 +28,8 @@ int main() {
     spektrum_init();
     xbee_init();
     i2c_init();
-    mag_init();
+    alt_init();
+//    mag_init();
     mpu_init();
     ins_init();
     inscomp_init();
