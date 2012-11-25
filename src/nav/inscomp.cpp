@@ -19,7 +19,7 @@ static Mutex mutex;
 static Signal signal;
 
 // constants
-static const float ekf_P_init[] = { 1e-4, 1e-4, 1e-4, 1e-3, 1e-3, 1e-3 };
+static const float ekf_P_init[] = { 1e-4, 1e-4, 1e-4, 1e-3, 1e-3, 1e-3, 1e4, 1e4, 1e4 };
 
 // task
 static Task inscomp_task;
@@ -55,8 +55,8 @@ void inscomp_stop() {
 
 void inscomp_reset() {
     Lock lock(mutex);
-    ekf_state.x = ZeroMatrix<float, 6, 1>();
-    ekf_state.P = diag(ConstMatrix<float, 6, 1>(ekf_P_init));
+    ekf_state.x = ZeroMatrix<float, 9, 1>();
+    ekf_state.P = diag(ConstMatrix<float, 9, 1>(ekf_P_init));
     reset_ctr = 0;
     iteration_ctr = 0;
     skip = true;
@@ -84,6 +84,7 @@ INSCompDebugState inscomp_get_debug_state() {
     quat_norm(state.quat);
     state.rate = ins_get_rate() - ekf_state.err_gyro_bias();
     state.bias_gyro = ins_get_rate_bias() + ekf_state.err_gyro_bias();
+    state.bias_mag = ekf_state.mag_bias();
     state.acc_norm_err = acc_norm_err;
     return state;
 }
@@ -124,7 +125,7 @@ void inscomp_func(void *unused) {
                 iteration_ctr++;
                 if (++reset_ctr >= 100) {
                     ins_correct(ekf_state.err_quat(), ekf_state.err_gyro_bias());
-                    ekf_state.x = ZeroMatrix<float, 6, 1>();
+                    ekf_state.x.slice<6, 1>(0, 0) = ZeroMatrix<float, 6, 1>();
                     reset_ctr = 0;
                 }
             }

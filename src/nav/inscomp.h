@@ -23,6 +23,7 @@ struct INSCompDebugState {
     Quaternion quat;
     VectorF<3> rate;
     VectorF<3> bias_gyro;
+    VectorF<3> bias_mag;
     float acc_norm_err;
 };
 

@@ -172,6 +172,7 @@ void controlpanel_inscomp() {
 
         dump_rpy(quat_to_rpy(state.quat));
         dump_vec(state.bias_gyro, 1000);
+        dump_vec(state.bias_mag, 1);
         uart << state.acc_norm_err*1e6f;
         uart << endl;
         sched_sleep(1);
@@ -318,6 +319,7 @@ void controlpanel_esc_inscomp() {
 
         dump_rpy(quat_to_rpy(state.quat));
         dump_vec(state.bias_gyro, 1000);
+        dump_vec(state.bias_mag, 1);
         uart << state.acc_norm_err*1e6f << '\t';
 
         SpektrumSample speksample = spektrum_sample(false);
