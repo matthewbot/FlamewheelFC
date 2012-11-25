@@ -359,6 +359,7 @@ void controlpanel_esc_map() {
 }
 
 void controlpanel_controller() {
+    bool disabled = false;
     while (!uart_avail()) {
         if (controller_running()) {
             ControllerDebug state = controller_get_debug();
@@ -367,8 +368,12 @@ void controlpanel_controller() {
             dump_vec(state.dout, 1000);
             dump_vec(state.motors, 1000);
             uart << endl;
+
+            disabled = false;
         } else {
-            uart << "Controller disabled" << endl;
+            if (!disabled)
+                uart << "Controller disabled" << endl;
+            disabled = true;
         }
         sched_sleep(2);
     }

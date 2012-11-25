@@ -3,8 +3,8 @@
 static const float g_e[] = { 0, 0, -9.8 };
 static const float m_e[] = { 2.41377e4, -2.32061e3, 4.038953e4 };
 static const float R_g[] = { 1e-4, 1e-3, 1e-3 };
-static const float R_a[] = { 1e0, 1e0, 1e0 };
-static const float R_m[] = { 1e4, 1e4, 1e4 };
+static const float R_a[] = { 3e-1, 3e-1, 3e-1 };
+static const float R_m[] = { 3e4, 3e4, 3e4 };
 static const float Q_b_g[] = { 1e-7, 1e-7, 1e-7 };
 static const float Q_b_m[] = { 1e0, 1e0, 1e0 };
 
