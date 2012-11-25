@@ -11,14 +11,14 @@ VectorF<3> calibration_gyro(const int16_t (&sample)[3]) {
     return static_cast<float>(.97/65.5/180*pi)*v;
 }
 
-static const int16_t magoffsets[] = {23, -83, 149};
-static const float magscales[] = {-121.95, 121.95, -121.95};
+static const float mag_shifts[] = {28.1579, 95.8592, 177.2704};
+static const float mag_correction[] = {1.9659e-3, -1.6244e-5, -2.1436e-5,
+                                       -1.6244e-5, 2.0544e-3, 8.7991e-5,
+                                       -2.1436e-5, 8.7991e-5, 2.0941e-3};
 
 VectorF<3> calibration_mag(const int16_t (&sample)[3]) {
-    VectorF<3> ret;
-    for (int i=0; i<3; i++)
-        ret[i] = magscales[i]*static_cast<float>(sample[i] - magoffsets[i]);
-    return ret;
+    VectorF<3> vec = {(float)-sample[0], (float)sample[1], (float)-sample[2]};
+    return ConstMatrix<float, 3, 3>(mag_correction) * (vec + ConstMatrix<float, 3, 1>(mag_shifts));
 }
 
 void calibration_esc(const VectorF<4> &thrust, uint16_t (&pwms)[4], uint16_t minpwm) {

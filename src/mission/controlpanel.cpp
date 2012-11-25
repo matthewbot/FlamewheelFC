@@ -128,7 +128,7 @@ void controlpanel_sensors_cal() {
 
         dump_vec(gyro, 1000);
         dump_vec(accel, 1000);
-        dump_vec(mag, 1);
+        dump_vec(mag, 1000);
         uart << endl;
     }
     uart_getch();
@@ -172,7 +172,7 @@ void controlpanel_inscomp() {
 
         dump_rpy(quat_to_rpy(state.quat));
         dump_vec(state.bias_gyro, 1000);
-        dump_vec(state.bias_mag, 1);
+        dump_vec(state.bias_mag, 1000);
         uart << state.acc_norm_err*1e6f;
         uart << endl;
         sched_sleep(1);

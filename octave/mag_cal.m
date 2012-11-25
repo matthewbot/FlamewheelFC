@@ -6,10 +6,12 @@ format long;
 
 data = csvread('data.csv');
 data = data(:, 7:9);
-down_sample = data(1:10:length(data),:);
+data = data(1:50:length(data),:);
+data(:, 1) *= -1;
+data(:, 3) *= -1;
 
 figure;
-scatter3(down_sample(:,1),down_sample(:,2),down_sample(:,3),'r');
+scatter3(data(:,1),data(:,2),data(:,3),'r');
 
 A = zeros(size(data,1), 9);
 A(:,1) = data(:,1).^2;
@@ -24,7 +26,7 @@ A(:,9) = data(:,3);
 
 B = ones(size(data,1), 1);
 
-X = inv(A'*A)*A'*B;
+X = (A'*A)\(A'*B);
 Xorig = X;
 
 
@@ -48,19 +50,25 @@ b2 = (b'*P1)';
 
 x0 = (b2 ./ diag(a2))*.5;
 
-shift = P1*x0
-rot = P1
+shift = P1*x0;
+ rot = P1;
 
 c = 1 + (x0(1))^2*a2(1,1) + (x0(2))^2*a2(2,2) + (x0(3))^2*a2(3,3);
 
 %Find the 1/2 lenght of all "major" axis of the ellipsoid
-Major1 = sqrt(c/a2(1,1))
-Major2 = sqrt(c/a2(2,2))
-Major3 = sqrt(c/a2(3,3))
+Major1 = sqrt(c/a2(1,1));
+Major2 = sqrt(c/a2(2,2));
+Major3 = sqrt(c/a2(3,3));
 
-rot
+correction = rot'*diag(1./[Major1 Major2 Major3])*rot
 shift
-Major1
-Major2
-Major3
+
+gooddata = zeros(size(data));
+for i = 1:rows(data)
+  gooddata(i, :) = (correction * (data(i, :)' + shift))';
+endfor
+
+figure;
+scatter3(gooddata(:,1),gooddata(:,2),gooddata(:,3),'r');
+
 
