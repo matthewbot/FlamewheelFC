@@ -61,7 +61,7 @@ static void wait_arm() {
 
         SpektrumSample sample = spektrum_sample(false);
         VectorF<4> vec = calibration_spektrum(sample);
-        if (vec[3] < .05 && fabsf(vec[2]) > .95) {
+        if (vec[3] < .05f && fabsf(vec[2]) > .95f) {
             if (allow_arm)
                 armsamples++;
         } else {
@@ -92,16 +92,16 @@ static void fly() {
         if (!spektrum_valid())
             vec = { 0, 0, 0, 0 }; // TODO handle controller dropout better
 
-        if (vec[3] > .1) {
+        if (vec[3] > .1f) {
             disarm_cycles = 0;
-            heading += vec[2]*.05;
+            heading += vec[2]*.05f;
             if (heading < -(float)M_PI)
                 heading += (float)M_PI;
             else if (heading > (float)M_PI)
                 heading -= (float)M_PI;
 
-            float roll = vec[0]*.8;
-            float pitch = vec[1]*.8;
+            float roll = vec[0]*.8f;
+            float pitch = vec[1]*.8f;
 
             ControllerSetpoint setpoint;
             setpoint.mode = ControllerMode::ATTITUDE;
@@ -113,7 +113,7 @@ static void fly() {
             if (!controller_running())
                 controller_start();
         } else {
-            if (fabsf(vec[2]) > .95)
+            if (fabsf(vec[2]) > .95f)
                 disarm_cycles++;
             else
                 disarm_cycles = 0;

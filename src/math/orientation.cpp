@@ -46,12 +46,12 @@ Quaternion axisangle_to_quat(const VectorF<3> &axis, float angle) {
 }
 
 Quaternion rpy_to_quat(const VectorF<3> &rpy) {
-    float cr = cos(rpy[0]/2);
-    float sr = sin(rpy[0]/2);
-    float cp = cos(rpy[1]/2);
-    float sp = sin(rpy[1]/2);
-    float cy = cos(rpy[2]/2);
-    float sy = sin(rpy[2]/2);
+    float cr = cosf(rpy[0]/2);
+    float sr = sinf(rpy[0]/2);
+    float cp = cosf(rpy[1]/2);
+    float sp = sinf(rpy[1]/2);
+    float cy = cosf(rpy[2]/2);
+    float sy = sinf(rpy[2]/2);
     return { cr*cp*cy + sr*sp*sy,
             sr*cp*cy - cr*sr*sy,
             cr*sp*cy + sr*cp*sy,

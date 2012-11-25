@@ -340,7 +340,7 @@ void controlpanel_esc_map() {
    while (!uart_avail() && spektrum_valid()) {
         SpektrumSample speksample = spektrum_sample(false);
         VectorF<4> out = calibration_spektrum(speksample);
-        out.slice<3, 1>(0, 0) = .25*out.slice<3, 1>(0, 0);
+        out.slice<3, 1>(0, 0) = .25f*out.slice<3, 1>(0, 0);
         VectorF<4> motors = motor_map(out);
 
         uint16_t pwm[4];
