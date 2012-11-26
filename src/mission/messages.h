@@ -35,6 +35,10 @@ struct StatusMsg {
     int16_t gain_roll_d;
     int16_t gain_pitch_d;
     int16_t gain_yaw_d;
+
+    int16_t mag_x_bias;
+    int16_t mag_y_bias;
+    int16_t mag_z_bias;
 } __attribute__((packed));
 
 struct GainsMessage {

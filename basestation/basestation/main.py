@@ -49,6 +49,9 @@ class BaseStation(object):
     def quad_callback(self):
         self.orientation.set_roll_pitch(self.quadstate['roll'], self.quadstate['pitch'])
 
+        self.graphtop.add_sample([self.quadstate['roll'], self.quadstate['pitch'], self.quadstate['yaw']])
+        self.graphbottom.add_sample([self.quadstate['roll_rate'], self.quadstate['pitch_rate'], self.quadstate['yaw_rate']])
+
         Gdk.threads_enter()
         self.main_window.queue_draw()
         Gdk.threads_leave()

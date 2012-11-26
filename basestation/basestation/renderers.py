@@ -132,7 +132,10 @@ class GraphRenderer(object):
         cr.paint()
 
         cr.translate(width/2, height/2)
-        cr.scale(width/self.maxsamples*.95, -height/(maxval-minval)*.95)
+        if maxval != minval:
+            cr.scale(width/self.maxsamples*.95, -height/(maxval-minval)*.95)
+        else:
+            cr.scale(width/self.maxsamples*.95, -height * .95)
         cr.translate(-self.maxsamples/2, -(minval + (maxval-minval)/2))
 
         if len(self.samples) > 0:

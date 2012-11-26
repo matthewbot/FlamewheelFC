@@ -86,7 +86,10 @@ status_fields = [
     ('gain_yaw_p', 'h', 10**4),
     ('gain_roll_d', 'h', 10**4),
     ('gain_pitch_d', 'h', 10**4),
-    ('gain_yaw_d', 'h', 10**4)]
+    ('gain_yaw_d', 'h', 10**4),
+    ('mag_x_bias', 'h', 10**4),
+    ('mag_y_bias', 'h', 10**4),
+    ('mag_z_bias', 'h', 10**4)]
 
 gain_fields = [
     ('roll_p', 'h', 10**4),

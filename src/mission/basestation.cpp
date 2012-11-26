@@ -62,6 +62,10 @@ static void send_status_message() {
     msg.gain_pitch_d = float16(controllergains.d[1], 4);
     msg.gain_yaw_d = float16(controllergains.d[2], 4);
 
+    msg.mag_x_bias = float16(attstate.bias_mag[0], 4);
+    msg.mag_y_bias = float16(attstate.bias_mag[1], 4);
+    msg.mag_z_bias = float16(attstate.bias_mag[2], 4);
+
     XBeeSendResponse resp = xbee_send(1, reinterpret_cast<const char *>(&msg), sizeof(msg));
     valid = (resp == XBeeSendResponse::SUCCESS);
 }
