@@ -4,9 +4,9 @@ static const float g_e[] = { 0, 0, -9.8 };
 static const float m_e[] = { .512308, -0.049210, .857396 };
 static const float R_g[] = { 1e-4, 1e-3, 1e-3 };
 static const float R_a[] = { 3e-1, 3e-1, 3e-1 };
-static const float R_m[] = { 3e-2, 3e-2, 3e-2 };
+static const float R_m[] = { 1e-1, 1e-1, 1e-1 };
 static const float Q_b_g[] = { 1e-7, 1e-7, 1e-7 };
-static const float Q_b_m[] = { 1e-3, 1e-3, 1e-3 };
+static const float Q_b_m[] = { 1e-4, 1e-4, 1e-4 };
 
 Quaternion EKFState::err_quat() const {
     Quaternion q;

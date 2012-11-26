@@ -37,8 +37,8 @@ void controller_reset() {
     running = false;
     manual_thrust = false;
 
-    gains.p = VectorF<3>{.5, .5, .05};
-    gains.d = VectorF<3>{.1, .1, .03};
+    gains.p = VectorF<3>{.15, .15, .2};
+    gains.d = VectorF<3>{.04, .04, .05};
 }
 
 void controller_start() {
