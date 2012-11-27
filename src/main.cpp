@@ -26,6 +26,7 @@ int main() {
     rgbled_init();
     rgbled_set(0xFF8000, 100);
     spektrum_init();
+    rgbled_set(0xFF8000, 100);
     xbee_init();
     i2c_init();
     alt_init();

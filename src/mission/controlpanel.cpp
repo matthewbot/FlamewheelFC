@@ -11,6 +11,7 @@
 #include "drivers/spektrum.h"
 #include "drivers/esc.h"
 #include "drivers/board.h"
+#include "drivers/alt.h"
 #include "kernel/sched.h"
 #include <string.h>
 
@@ -104,6 +105,7 @@ void controlpanel_sensors_raw() {
     while (!uart_avail()) {
         MPUSample mpusample = mpu_sample();
         MagSample magsample = mag_sample(false);
+        AltSample altsample = alt_sample(false);
 
         for (int i=0; i<3; i++)
             uart << mpusample.gyro[i] << '\t';
@@ -111,6 +113,8 @@ void controlpanel_sensors_raw() {
             uart << mpusample.accel[i] << '\t';
         for (int i=0; i<3; i++)
             uart << magsample.field[i] << '\t';
+        uart << altsample.up << '\t';
+        uart << altsample.ut << '\t';
         uart << endl;
     }
     uart_getch();
