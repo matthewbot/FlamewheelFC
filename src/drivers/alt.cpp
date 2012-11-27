@@ -13,7 +13,7 @@ static Signal signal;
 enum class State { TEMP, PRESSURE };
 static State state;
 static uint8_t read_buf[2];
-static int16_t temp;
+static int temp;
 
 // Pin constants
 static constexpr int PIN_EOC = 5;
@@ -75,6 +75,8 @@ AltSample alt_sample(bool wait) {
     return sample;
 }
 
+const AltEEPROM &alt_get_eeprom() { return eeprom; }
+
 // called when EOSC pin goes high
 extern "C" void irq_exti95() {
     i2c_shared_lock();
@@ -89,7 +91,7 @@ static void callback_read_sent() {
 
 // called when data is received
 static void callback_received() {
-    int16_t val = (read_buf[0] << 8) | read_buf[1];
+    int val = (read_buf[0] << 8) | read_buf[1];
 
     if (state == State::TEMP) {
         temp = val;

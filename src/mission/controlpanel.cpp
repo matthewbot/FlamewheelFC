@@ -125,14 +125,19 @@ void controlpanel_sensors_cal() {
     while (!uart_avail()) {
         MPUSample mpusample = mpu_sample();
         MagSample magsample = mag_sample(false);
+        AltSample altsample = alt_sample(false);
 
         VectorF<3> gyro = calibration_gyro(mpusample.gyro);
         VectorF<3> accel = calibration_accel(mpusample.accel);
         VectorF<3> mag = calibration_mag(magsample.field);
+        AltCalibrated alt = calibration_alt(altsample);
 
         dump_vec(gyro, 1000);
         dump_vec(accel, 1000);
         dump_vec(mag, 1000);
+        uart << alt.temp << '\t';
+        uart << alt.pressure << '\t';
+        uart << alt.alt*1000 << '\t';
         uart << endl;
     }
     uart_getch();

@@ -70,3 +70,38 @@ VectorF<4> calibration_spektrum(const SpektrumSample &sample) {
     out[3] = spektrum_to_unsigned_float(sample.channel[0], 200, 845);
     return out;
 }
+
+AltCalibrated calibration_alt(const AltSample &sample) {
+    const AltEEPROM &eeprom = alt_get_eeprom();
+
+    int X1 = ((sample.ut - (int)eeprom.AC6) * (int)eeprom.AC5) >> 15;
+    int X2 = (eeprom.MC << 11) / (X1 + eeprom.MD);
+    int B5 = X1 + X2;
+    int T = (B5 + 8) >> 4;
+
+    int B6 = B5 - 4000;
+    X1 = (eeprom.B2 * (B6 * (B6 >> 12))) >> 11;
+    X2 = (eeprom.AC2 * B6) >> 11;
+    int X3 = X1 + X2;
+    int B3 = ((eeprom.AC1*4+X3)+2)/4;
+    X1 = (eeprom.AC3 * B6) >> 13;
+    X2 = (eeprom.B1 * ((B6 * B6) >> 12)) >> 16;
+    X3 = ((X1 + X2) + 2) >> 2;
+    unsigned int B4 = (eeprom.AC4 * (unsigned int)(X3 + 32768)) >> 15;
+    unsigned int B7 = ((unsigned int)sample.up - B3) * 50000;
+    int p;
+    if (B7 < 0x80000000)
+        p = (B7 * 2) / B4;
+    else
+        p = (B7 / B4) * 2;
+    X1 = (p >> 8) * (p >> 8);
+    X1 = (X1 * 3038) >> 16;
+    X2 = (-7357 * p) >> 16;
+    p = p + ((X1 + X2 + 3791) >> 4);
+
+    AltCalibrated cal;
+    cal.temp = T / 10.0f;
+    cal.pressure = p;
+    cal.alt = 44330 * (1 - powf(p / 101325.0f, 1 / 5.255f));
+    return cal;
+}
