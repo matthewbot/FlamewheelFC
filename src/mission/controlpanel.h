@@ -8,6 +8,7 @@ void controlpanel_sensors_cal();
 void controlpanel_triad();
 void controlpanel_ins();
 void controlpanel_inscomp();
+void controlpanel_altitude();
 void controlpanel_spektrum();
 void controlpanel_spektrum_cal();
 void controlpanel_esc_test();

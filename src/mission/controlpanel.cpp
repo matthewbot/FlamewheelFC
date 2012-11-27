@@ -4,6 +4,7 @@
 #include "nav/ins.h"
 #include "nav/inscomp.h"
 #include "nav/controller.h"
+#include "nav/altitude.h"
 #include "math/orientation.h"
 #include "drivers/uart.h"
 #include "drivers/mag.h"
@@ -63,6 +64,14 @@ void controlpanel_run() {
             uart << "Inscomp started from triad" << endl;
         } else if (strcmp(buf, "inscomp") == 0) {
             controlpanel_inscomp();
+        } else if (strcmp(buf, "altitude start") == 0) {
+            altitude_start();
+            uart << "Altitude started" << endl;
+        } else if (strcmp(buf, "altitude stop") == 0) {
+            altitude_stop();
+            uart << "Altitude stopped" << endl;
+        } else if (strcmp(buf, "altitude") == 0) {
+            controlpanel_altitude();
         } else if (strcmp(buf, "spektrum bind") == 0) {
             spektrum_bind();
             uart << "Entered bind mode" << endl;
@@ -186,6 +195,20 @@ void controlpanel_inscomp() {
         uart << state.acc_norm_err*1e6f;
         uart << endl;
         sched_sleep(1);
+    }
+
+    uart_getch();
+    uart << endl;
+}
+
+void controlpanel_altitude() {
+    altitude_start();
+
+    while (!uart_avail()) {
+        uart << altitude_get()*1000 << '\t';
+        uart << altitude_get_rate()*1000 << '\t';
+        uart << endl;
+        sched_sleep(50);
     }
 
     uart_getch();

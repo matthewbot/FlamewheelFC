@@ -4,6 +4,7 @@
 #include "nav/ins.h"
 #include "nav/inscomp.h"
 #include "nav/controller.h"
+#include "nav/altitude.h"
 #include "drivers/uart.h"
 #include "drivers/i2c.h"
 #include "drivers/rgbled.h"
@@ -36,6 +37,7 @@ int main() {
     sonar_init();
     ins_init();
     inscomp_init();
+    altitude_init();
     controller_init();
     basestation_init();
     flight_init();
