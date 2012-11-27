@@ -1,9 +1,11 @@
 #include "nav/calibration.h"
 #include "math/orientation.h"
 
+static const float accel_shifts[] = {.28, .28, 0};
+
 VectorF<3> calibration_accel(const int16_t (&sample)[3]) {
     VectorF<3> v = { static_cast<float>(-sample[0]), static_cast<float>(-sample[1]), static_cast<float>(sample[2]) };
-    return static_cast<float>(.98/8192*9.8)*v;
+    return static_cast<float>(.98/8192*9.8)*v + ConstMatrix<float, 3, 1>(accel_shifts);
 }
 
 VectorF<3> calibration_gyro(const int16_t (&sample)[3]) {
@@ -62,9 +64,9 @@ static float spektrum_to_unsigned_float(uint16_t chan, uint16_t min, uint16_t ma
 
 VectorF<4> calibration_spektrum(const SpektrumSample &sample) {
     VectorF<4> out;
-    out[0] = spektrum_to_float(sample.channel[1], 170, 830, .02);
-    out[1] = spektrum_to_float(sample.channel[2], 145, 860, .02);
-    out[2] = spektrum_to_float(sample.channel[3], 200, 850, .05);
+    out[0] = spektrum_to_float(sample.channel[1], 170, 830, .05);
+    out[1] = spektrum_to_float(sample.channel[2], 145, 860, .05);
+    out[2] = spektrum_to_float(sample.channel[3], 190, 830, .05);
     out[3] = spektrum_to_unsigned_float(sample.channel[0], 200, 845);
     return out;
 }
