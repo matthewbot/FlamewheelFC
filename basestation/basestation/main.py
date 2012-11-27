@@ -51,12 +51,23 @@ class BaseStation(object):
     def quad_callback(self):
         self.orientation.set_roll_pitch(self.quadstate['roll'], self.quadstate['pitch'])
 
-        self.graphtop.add_sample([self.quadstate['roll'], self.quadstate['pitch'], self.quadstate['yaw']])
-        self.graphbottom.add_sample([self.quadstate['roll_rate'], self.quadstate['pitch_rate'], self.quadstate['yaw_rate']])
+        if self.current_plot == 'attitude':
+            self.graphtop.add_sample([self.quadstate['roll'], self.quadstate['pitch'], self.quadstate['yaw']])
+            self.graphbottom.add_sample([self.quadstate['roll_rate'], self.quadstate['pitch_rate'], self.quadstate['yaw_rate']])
+        elif self.current_plot == 'control':
+            self.graphtop.add_sample([self.quadstate['roll_p'], self.quadstate['pitch_p'], self.quadstate['yaw_p']])
+            self.graphbottom.add_sample([self.quadstate['roll_d'], self.quadstate['pitch_d'], self.quadstate['yaw_d']])
+        elif self.current_plot == 'altitude':
+            self.graphtop.add_sample([self.quadstate['altitude'], 0, 0])
+            self.graphbottom.add_sample([self.quadstate['altitude_rate'], 0, 0])
 
         Gdk.threads_enter()
         for esc in all_escs:
             self.builder.get_object(esc+'_bar').set_fraction(self.quadstate['esc_'+esc])
+
+        powerfrac = (self.quadstate['battery'] - 10) / 2.6
+        powerfrac = min(1, max(0, powerfrac))
+        self.builder.get_object('power_bar').set_fraction(powerfrac)
         self.main_window.queue_draw()
         Gdk.threads_leave()
 

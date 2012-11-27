@@ -46,7 +46,9 @@ struct StatusMsg {
     uint16_t esc_rl;
 
     uint16_t altitude;
-    uint16_t throttle;
+    uint16_t altitude_rate;
+
+    uint16_t battery;
 } __attribute__((packed));
 
 struct GainsMessage {

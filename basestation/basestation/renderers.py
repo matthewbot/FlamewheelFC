@@ -91,7 +91,7 @@ class OrientationRenderer(object):
         return self.pitch_deg_to_offset(pitch/math.pi*180)
 
     def pitch_deg_to_offset(self, pitch):
-        return pitch/60
+        return pitch/45
 
 class GraphRenderer(object):
     def __init__(self, signalcount, maxsamples):

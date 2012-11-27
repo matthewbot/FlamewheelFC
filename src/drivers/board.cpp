@@ -26,7 +26,6 @@ void board_init() {
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
     tim->PSC = 84e6 / (1000000);
-    tim->CCMR1 = TIM_CCMR1_OC1M_TOGGLE;
     tim->CCR1 = 1;
     tim->CCER = TIM_CCER_CC1E;
 
@@ -68,9 +67,11 @@ void board_buzzer(int freq) {
     if (freq > 0) {
         tim->ARR = 1000000 / freq;
         tim->CNT = 0;
+        tim->CCMR1 = TIM_CCMR1_OC1M_TOGGLE;
         tim->CR1 |= TIM_CR1_CEN;
     } else {
         tim->CR1 &= ~TIM_CR1_CEN;
         tim->CNT = 0;
+        tim->CCMR1 = TIM_CCMR1_OC1M_FORCE_OFF;
     }
 }

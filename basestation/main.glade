@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
-  <object class="GtkListStore" id="data_liststore"/>
   <object class="GtkAdjustment" id="gain_pitch_d_adj">
     <property name="upper">1000</property>
     <property name="step_increment">1</property>
@@ -268,6 +267,28 @@
       <action-widget response="0">cancel_button</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkListStore" id="plots_liststore">
+    <columns>
+      <!-- column-name id -->
+      <column type="gchararray"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">attitude</col>
+        <col id="1" translatable="yes">Attitude and Velocity</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">control</col>
+        <col id="1" translatable="yes">P &amp; D Control</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">altitude</col>
+        <col id="1" translatable="yes">Altitude and Rate</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="main_window">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">FC Ground Station</property>
@@ -316,7 +337,7 @@
                     </child>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
+                    <property name="expand">True</property>
                     <property name="fill">True</property>
                     <property name="position">0</property>
                   </packing>
@@ -421,46 +442,23 @@
                     <property name="can_focus">False</property>
                     <property name="label_xalign">0</property>
                     <child>
-                      <object class="GtkTreeView" id="data_treeview">
+                      <object class="GtkProgressBar" id="power_bar">
                         <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
-                        <property name="model">data_liststore</property>
-                        <property name="expander_column">valuecolumn</property>
-                        <property name="fixed_height_mode">True</property>
-                        <property name="enable_grid_lines">vertical</property>
-                        <child internal-child="selection">
-                          <object class="GtkTreeSelection" id="treeview-selection1"/>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="namecolumn">
-                            <property name="sizing">fixed</property>
-                            <property name="fixed_width">150</property>
-                            <property name="title" translatable="yes">Name</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="valuecolumn">
-                            <property name="sizing">fixed</property>
-                            <property name="title" translatable="yes">Value</property>
-                            <property name="sort_order">descending</property>
-                          </object>
-                        </child>
+                        <property name="can_focus">False</property>
                       </object>
                     </child>
                     <child type="label">
-                      <object class="GtkLabel" id="label3">
+                      <object class="GtkLabel" id="label">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Data&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Battery Level&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
                       </object>
                     </child>
                   </object>
                   <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
                     <property name="position">2</property>
                   </packing>
                 </child>
@@ -488,7 +486,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="model">plots_liststore</property>
-                        <property name="active">1</property>
+                        <property name="active">0</property>
                         <child>
                           <object class="GtkCellRendererText" id="cellrenderertext1"/>
                           <attributes>
@@ -579,27 +577,5 @@
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkListStore" id="plots_liststore">
-    <columns>
-      <!-- column-name id -->
-      <column type="gchararray"/>
-      <!-- column-name name -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">attitude</col>
-        <col id="1" translatable="yes">Attitude and Velocity</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">control</col>
-        <col id="1" translatable="yes">P &amp; D Control</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">altitude</col>
-        <col id="1" translatable="yes">Altitude and Throttle</col>
-      </row>
-    </data>
   </object>
 </interface>

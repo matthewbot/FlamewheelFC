@@ -50,6 +50,10 @@ void controller_start() {
 void controller_stop() {
     Lock lock(mutex);
     running = false;
+    debug.pout = ZeroMatrix<float, 4, 1>();
+    debug.dout = ZeroMatrix<float, 4, 1>();
+    debug.out = ZeroMatrix<float, 4, 1>();
+    debug.motors = ZeroMatrix<float, 4, 1>();
 }
 
 bool controller_running() {

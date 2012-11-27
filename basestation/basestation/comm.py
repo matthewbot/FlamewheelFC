@@ -94,8 +94,9 @@ status_fields = [
     ('esc_fr', 'h', 10**4),
     ('esc_rr', 'h', 10**4),
     ('esc_rl', 'h', 10**4),
-    ('altitude', 'h', 10**4),
-    ('throttle', 'h', 10**4)]
+    ('altitude', 'h', 10**3),
+    ('altitude_rate', 'h', 10**3),
+    ('battery', 'h', 10**3)]
 
 gain_fields = [
     ('roll_p', 'h', 10**4),

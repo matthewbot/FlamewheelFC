@@ -2,7 +2,9 @@
 #include "mission/messages.h"
 #include "nav/inscomp.h"
 #include "nav/controller.h"
+#include "nav/altitude.h"
 #include "drivers/xbee.h"
+#include "drivers/board.h"
 #include "kernel/sched.h"
 #include "kernel/kernel.h"
 #include <stdint.h>
@@ -71,8 +73,10 @@ static void send_status_message() {
     msg.esc_rr = float16(controllerdebug.motors[2], 4);
     msg.esc_rl = float16(controllerdebug.motors[3], 4);
 
-    msg.altitude = 0;
-    msg.throttle = 0;
+    msg.altitude = float16(altitude_get(), 3);
+    msg.altitude_rate = float16(altitude_get_rate(), 3);
+
+    msg.battery = float16(board_get_voltage(), 3);
 
     XBeeSendResponse resp = xbee_send(1, reinterpret_cast<const char *>(&msg), sizeof(msg));
     valid = (resp == XBeeSendResponse::SUCCESS);
