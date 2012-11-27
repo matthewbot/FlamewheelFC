@@ -12,6 +12,7 @@
 #include "drivers/esc.h"
 #include "drivers/board.h"
 #include "drivers/alt.h"
+#include "drivers/sonar.h"
 #include "kernel/sched.h"
 #include <string.h>
 
@@ -106,6 +107,7 @@ void controlpanel_sensors_raw() {
         MPUSample mpusample = mpu_sample();
         MagSample magsample = mag_sample(false);
         AltSample altsample = alt_sample(false);
+        uint16_t sonarsample = sonar_sample(false);
 
         for (int i=0; i<3; i++)
             uart << mpusample.gyro[i] << '\t';
@@ -115,6 +117,7 @@ void controlpanel_sensors_raw() {
             uart << magsample.field[i] << '\t';
         uart << altsample.up << '\t';
         uart << altsample.ut << '\t';
+        uart << sonarsample << '\t';
         uart << endl;
     }
     uart_getch();
@@ -126,11 +129,13 @@ void controlpanel_sensors_cal() {
         MPUSample mpusample = mpu_sample();
         MagSample magsample = mag_sample(false);
         AltSample altsample = alt_sample(false);
+        uint16_t sonarsample = sonar_sample(false);
 
         VectorF<3> gyro = calibration_gyro(mpusample.gyro);
         VectorF<3> accel = calibration_accel(mpusample.accel);
         VectorF<3> mag = calibration_mag(magsample.field);
         AltCalibrated alt = calibration_alt(altsample);
+        float sonar = calibration_sonar(sonarsample);
 
         dump_vec(gyro, 1000);
         dump_vec(accel, 1000);
@@ -138,6 +143,7 @@ void controlpanel_sensors_cal() {
         uart << alt.temp << '\t';
         uart << alt.pressure << '\t';
         uart << alt.alt*1000 << '\t';
+        uart << sonar*1000 << '\t';
         uart << endl;
     }
     uart_getch();

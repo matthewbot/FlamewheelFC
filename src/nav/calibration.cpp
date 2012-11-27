@@ -105,3 +105,7 @@ AltCalibrated calibration_alt(const AltSample &sample) {
     cal.alt = 44330 * (1 - powf(p / 101325.0f, 1 / 5.255f));
     return cal;
 }
+
+float calibration_sonar(uint16_t sample) {
+    return sample / 5800.0f;
+}

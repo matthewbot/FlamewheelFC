@@ -14,6 +14,7 @@
 #include "drivers/esc.h"
 #include "drivers/xbee.h"
 #include "drivers/board.h"
+#include "drivers/sonar.h"
 #include <stdint.h>
 #include <stm32f4xx.h>
 
@@ -32,6 +33,7 @@ int main() {
     alt_init();
     mag_init();
     mpu_init();
+    sonar_init();
     ins_init();
     inscomp_init();
     controller_init();
