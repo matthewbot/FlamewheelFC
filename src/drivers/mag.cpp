@@ -1,6 +1,7 @@
 #include "drivers/mag.h"
 #include "drivers/util.h"
 #include "drivers/i2c.h"
+#include "drivers/i2c_shared.h"
 #include "kernel/sync.h"
 #include "stm32f4xx_exts.h"
 
@@ -31,6 +32,8 @@ void mag_init() {
     __DMB();
 
     // configure mag
+    i2c_shared_wait();
+    i2c_shared_lock();
     i2c_polling_start(addr, false);
     i2c_polling_write(REG_IDA); // read the IDA register
     i2c_polling_start(addr, true);
@@ -41,6 +44,7 @@ void mag_init() {
     i2c_polling_write(0); // config a
     i2c_polling_write(0x40); // config b
     i2c_polling_stop();
+    i2c_shared_unlock();
 
     // enable EXTI
     SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI12_PB;
@@ -49,10 +53,13 @@ void mag_init() {
     util_enable_irq(EXTI15_10_IRQn, IRQ_PRI_HIGH);
 
     // jumpstart the async process
-    if (!(GPIOB->IDR & (1 << PIN_DRDY)))
-        i2c_async_send(addr, read_cmd, sizeof(read_cmd), i2c_async_done); // if DRDY is low, send a command
-    else
+    if (!(GPIOB->IDR & (1 << PIN_DRDY))) {
+        i2c_shared_wait();
+        i2c_shared_lock();
+        i2c_async_send(addr, read_cmd, sizeof(read_cmd), i2c_shared_done_unlock); // if DRDY is low, send a command
+    } else {
         irq_exti1510(); // if DRDY is high, run its IRQ since EXTI looks for edges not levels
+    }
 }
 
 MagSample mag_sample(bool block) {
@@ -78,6 +85,7 @@ MagSample mag_sample_averaged(int samples) {
 
 // called when DRDY pin goes high
 extern "C" void irq_exti1510() {
+    i2c_shared_lock();
     i2c_async_receive(addr, read_buf, sizeof(read_buf), callback_received);
     EXTI->PR = (1 << PIN_DRDY);
 }
@@ -91,5 +99,5 @@ static void callback_received() {
     sample.field[1] = pos[0] << 8 | pos[1];
     signal.notify_all();
 
-    i2c_async_send(addr, read_cmd, sizeof(read_cmd), i2c_async_done);
+    i2c_async_send(addr, read_cmd, sizeof(read_cmd), i2c_shared_done_unlock);
 }

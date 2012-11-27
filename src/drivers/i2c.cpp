@@ -63,6 +63,7 @@ void i2c_async_send(uint8_t new_addr, const uint8_t *new_out_buf, size_t new_out
     tx_stream->M0AR = (uint32_t)new_out_buf;
     tx_stream->NDTR = new_out_len;
     i2c->CR2 |= I2C_CR2_DMAEN | I2C_CR2_ITEVTEN;
+    while (i2c->CR1 & I2C_CR1_STOP) { }
     i2c->CR1 |= I2C_CR1_START;
 }
 
@@ -73,6 +74,7 @@ void i2c_async_receive(uint8_t new_addr, uint8_t *new_in_buf, size_t new_in_len,
     rx_stream->M0AR = (uint32_t)new_in_buf;
     rx_stream->NDTR = new_in_len;
     i2c->CR2 |= I2C_CR2_DMAEN | I2C_CR2_ITEVTEN;
+    while (i2c->CR1 & I2C_CR1_STOP) { }
     i2c->CR1 |= I2C_CR1_START;
 }
 

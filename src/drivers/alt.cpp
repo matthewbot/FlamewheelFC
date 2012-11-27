@@ -1,5 +1,6 @@
 #include "drivers/alt.h"
 #include "drivers/i2c.h"
+#include "drivers/i2c_shared.h"
 #include "drivers/stm32f4xx_exts.h"
 #include "drivers/util.h"
 #include "kernel/sync.h"
@@ -39,6 +40,8 @@ void alt_init() {
 
     // read EEPROM
     sched_sleep(10);
+    i2c_shared_wait();
+    i2c_shared_lock();
     i2c_polling_start(addr, false);
     i2c_polling_write(REG_AC1_MSB);
     i2c_polling_start(addr, true);
@@ -48,6 +51,7 @@ void alt_init() {
         eeprom.vals[i] = (msb << 8) | lsb;
     }
     i2c_polling_stop();
+    i2c_shared_unlock();
 
     // enable EXTI
     SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI5_PC;
@@ -56,10 +60,13 @@ void alt_init() {
     util_enable_irq(EXTI9_5_IRQn, IRQ_PRI_HIGH);
 
     // jumpstart the async process
-    if (!(GPIOC->IDR & (1 << PIN_EOC)))
-        i2c_async_send(addr, cmd_conv_temp, sizeof(cmd_conv_temp), i2c_async_done);
-    else
+    if (!(GPIOC->IDR & (1 << PIN_EOC))) {
+        i2c_shared_wait();
+        i2c_shared_lock();
+        i2c_async_send(addr, cmd_conv_temp, sizeof(cmd_conv_temp), i2c_shared_done_unlock);
+    } else {
         irq_exti95();
+    }
 }
 
 AltSample alt_sample(bool wait) {
@@ -70,6 +77,7 @@ AltSample alt_sample(bool wait) {
 
 // called when EOSC pin goes high
 extern "C" void irq_exti95() {
+    i2c_shared_lock();
     i2c_async_send(addr, cmd_read, sizeof(cmd_read), callback_read_sent);
     EXTI->PR = (1 << PIN_EOC);
 }
@@ -85,13 +93,13 @@ static void callback_received() {
 
     if (state == State::TEMP) {
         temp = val;
-        i2c_async_send(addr, cmd_conv_pressure, sizeof(cmd_conv_pressure), i2c_async_done);
+        i2c_async_send(addr, cmd_conv_pressure, sizeof(cmd_conv_pressure), i2c_shared_done_unlock);
         state = State::PRESSURE;
     } else {
         sample.ut = temp;
         sample.up = val;
         signal.notify_all();
-        i2c_async_send(addr, cmd_conv_temp, sizeof(cmd_conv_temp), i2c_async_done);
+        i2c_async_send(addr, cmd_conv_temp, sizeof(cmd_conv_temp), i2c_shared_done_unlock);
         state = State::TEMP;
     }
 }

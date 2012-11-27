@@ -30,7 +30,7 @@ int main() {
     xbee_init();
     i2c_init();
     alt_init();
-//    mag_init();
+    mag_init();
     mpu_init();
     ins_init();
     inscomp_init();
