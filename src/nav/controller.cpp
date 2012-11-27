@@ -101,6 +101,9 @@ void controller_func(void *unused) {
             quat_norm(err);
             float angle;
             VectorF<3> axis = quat_to_axisangle(err, angle);
+            if (angle > (float)M_PI) {
+                angle -= (float)(2*M_PI);
+            }
             pout.slice<3, 1>(0, 0) = angle*diag(cur_gains.p)*axis;
         }
 

@@ -96,9 +96,9 @@ static void fly() {
             disarm_cycles = 0;
             heading += vec[2]*.05f;
             if (heading < -(float)M_PI)
-                heading += (float)M_PI;
+                heading += (float)2*M_PI;
             else if (heading > (float)M_PI)
-                heading -= (float)M_PI;
+                heading -= (float)2*M_PI;
 
             float roll = vec[0]*.8f;
             float pitch = vec[1]*.8f;
