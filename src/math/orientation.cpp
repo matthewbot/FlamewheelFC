@@ -53,7 +53,7 @@ Quaternion rpy_to_quat(const VectorF<3> &rpy) {
     float cy = cosf(rpy[2]/2);
     float sy = sinf(rpy[2]/2);
     return { cr*cp*cy + sr*sp*sy,
-            sr*cp*cy - cr*sr*sy,
+            sr*cp*cy - cr*sp*sy,
             cr*sp*cy + sr*cp*sy,
             cr*cp*sy - sr*sp*cy };
 }
