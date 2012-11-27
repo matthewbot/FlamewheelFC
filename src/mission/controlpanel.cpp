@@ -115,8 +115,6 @@ void controlpanel_sensors_raw() {
             uart << mpusample.accel[i] << '\t';
         for (int i=0; i<3; i++)
             uart << magsample.field[i] << '\t';
-        uart << altsample.up << '\t';
-        uart << altsample.ut << '\t';
         uart << sonarsample << '\t';
         uart << endl;
     }
@@ -140,9 +138,6 @@ void controlpanel_sensors_cal() {
         dump_vec(gyro, 1000);
         dump_vec(accel, 1000);
         dump_vec(mag, 1000);
-        uart << alt.temp << '\t';
-        uart << alt.pressure << '\t';
-        uart << alt.alt*1000 << '\t';
         uart << sonar*1000 << '\t';
         uart << endl;
     }
