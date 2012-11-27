@@ -66,7 +66,7 @@ VectorF<4> calibration_spektrum(const SpektrumSample &sample) {
     VectorF<4> out;
     out[0] = spektrum_to_float(sample.channel[1], 170, 830, .05);
     out[1] = spektrum_to_float(sample.channel[2], 145, 860, .05);
-    out[2] = spektrum_to_float(sample.channel[3], 190, 830, .05);
+    out[2] = spektrum_to_float(sample.channel[3], 160, 830, .05);
     out[3] = spektrum_to_unsigned_float(sample.channel[0], 200, 845);
     return out;
 }

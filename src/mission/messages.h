@@ -39,6 +39,14 @@ struct StatusMsg {
     int16_t mag_x_bias;
     int16_t mag_y_bias;
     int16_t mag_z_bias;
+
+    uint16_t esc_fl;
+    uint16_t esc_fr;
+    uint16_t esc_rr;
+    uint16_t esc_rl;
+
+    uint16_t altitude;
+    uint16_t throttle;
 } __attribute__((packed));
 
 struct GainsMessage {

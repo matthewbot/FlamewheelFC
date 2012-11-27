@@ -11,6 +11,8 @@ def all_gains():
         for t in ['p', 'd']:
             yield axis + '_' + t
 
+all_escs = ['fl', 'fr', 'rr', 'rl']
+
 class BaseStation(object):
     def __init__(self):
         self.orientation = renderers.OrientationRenderer()
@@ -53,6 +55,8 @@ class BaseStation(object):
         self.graphbottom.add_sample([self.quadstate['roll_rate'], self.quadstate['pitch_rate'], self.quadstate['yaw_rate']])
 
         Gdk.threads_enter()
+        for esc in all_escs:
+            self.builder.get_object(esc+'_bar').set_fraction(self.quadstate['esc_'+esc])
         self.main_window.queue_draw()
         Gdk.threads_leave()
 

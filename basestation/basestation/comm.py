@@ -89,7 +89,13 @@ status_fields = [
     ('gain_yaw_d', 'h', 10**4),
     ('mag_x_bias', 'h', 10**4),
     ('mag_y_bias', 'h', 10**4),
-    ('mag_z_bias', 'h', 10**4)]
+    ('mag_z_bias', 'h', 10**4),
+    ('esc_fl', 'h', 10**4),
+    ('esc_fr', 'h', 10**4),
+    ('esc_rr', 'h', 10**4),
+    ('esc_rl', 'h', 10**4),
+    ('altitude', 'h', 10**4),
+    ('throttle', 'h', 10**4)]
 
 gain_fields = [
     ('roll_p', 'h', 10**4),

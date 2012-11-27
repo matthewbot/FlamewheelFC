@@ -66,6 +66,14 @@ static void send_status_message() {
     msg.mag_y_bias = float16(attstate.bias_mag[1], 4);
     msg.mag_z_bias = float16(attstate.bias_mag[2], 4);
 
+    msg.esc_fl = float16(controllerdebug.motors[0], 4);
+    msg.esc_fr = float16(controllerdebug.motors[1], 4);
+    msg.esc_rr = float16(controllerdebug.motors[2], 4);
+    msg.esc_rl = float16(controllerdebug.motors[3], 4);
+
+    msg.altitude = 0;
+    msg.throttle = 0;
+
     XBeeSendResponse resp = xbee_send(1, reinterpret_cast<const char *>(&msg), sizeof(msg));
     valid = (resp == XBeeSendResponse::SUCCESS);
 }
